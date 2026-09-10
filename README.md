@@ -10,7 +10,7 @@ Pure Bash — no dependencies, no extra tools. Symlinks configs cleanly into `$H
 
 | Scope | Platform | What it manages |
 |:------|:---------|:----------------|
-| `active/shared/` | Both | Ghostty, Starship, Yazi, Zsh, Bash, Git |
+| `active/shared/` | Both | Ghostty, Starship, Yazi, Zsh, Bash, Git, Herdr |
 | `active/linux/` | Linux | Neovim (Linux), xdg-terminals |
 | `active/macos/` | macOS | Neovim (macOS), Rectangle preferences |
 
