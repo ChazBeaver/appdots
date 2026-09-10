@@ -236,12 +236,14 @@ _ad_register gpl git/sync 'gpl' 'Pull origin/current-branch into the current bra
 # Git branch helpers (gb*)
 # =========================
 
-# ---------- gbh: searchable branch help ----------
+# ---------- gbh: searchable Git help ----------
 gbh() {
-  fn --group git/branch "$@"
+  local _AD_FN_CONTEXT_HEADER=$'Git help:    gbh\nGit branch:  gbl list | gbs switch | gbu update | gbo old | gbp prune | gbr report | gbd delete | gbv compare\nGit repos:   grc commit | grp pull | grr rebase-pull | grs status\nGit sync:    gps push | gpl pull | gsp stash-pull | gmm merge-main\nGit diff:    gdf files'
+
+  fn --group git "$@"
 }
 
-_ad_register gbh help 'gbh [QUERY]' 'Browse the Git branch function family.' view
+_ad_register gbh git/help 'gbh [--list] [QUERY]' 'Browse and search every Git function family.' view
 
 # ---------- internal helper: choose a sensible base branch ----------
 _ad_gb_base() {

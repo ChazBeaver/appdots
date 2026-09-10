@@ -45,9 +45,12 @@ _ad_fn_matches() {
   local name="$1"
   local group="$2"
   local query="$3"
-  local haystack token
+  local current_group haystack token
 
-  [[ -n "$group" && "${_AD_FN_GROUP[$name]}" != "$group" ]] && return 1
+  current_group="${_AD_FN_GROUP[$name]}"
+  if [[ -n "$group" && "$current_group" != "$group" && "$current_group" != "$group/"* ]]; then
+    return 1
+  fi
   [[ -z "$query" ]] && return 0
 
   haystack="${name} ${_AD_FN_GROUP[$name]} ${_AD_FN_USAGE[$name]} ${_AD_FN_DESCRIPTION[$name]} ${_AD_FN_LEGACY[$name]}"
@@ -64,11 +67,15 @@ _ad_fn_rows() {
 
   local group="$1"
   local query="$2"
-  local name badge
-  local -a names
+  local entry name badge
+  local -a entries
 
-  names=( ${(ok)_AD_FN_DESCRIPTION} )
-  for name in "${names[@]}"; do
+  for name in "${(k)_AD_FN_DESCRIPTION[@]}"; do
+    entries+=("${_AD_FN_GROUP[$name]}:$name")
+  done
+
+  for entry in "${(on)entries[@]}"; do
+    name="${entry#*:}"
     (( ${+functions[$name]} )) || continue
     _ad_fn_matches "$name" "$group" "$query" || continue
     badge="$(_ad_fn_badge "${_AD_FN_EFFECT[$name]}")"
@@ -128,7 +135,12 @@ fn() {
   local query=""
   local source_name=""
   local arg output key selected name
+  local palette_header='enter: insert  ctrl-e: source  ?: preview  esc: cancel'
   local -a fields
+
+  if [[ -n "${_AD_FN_CONTEXT_HEADER:-}" ]]; then
+    palette_header="${_AD_FN_CONTEXT_HEADER}"$'\n\n'"$palette_header"
+  fi
 
   while (( $# )); do
     arg="$1"
@@ -158,7 +170,7 @@ fn() {
         cat <<'EOF'
 Usage:
   fn [QUERY]                    Search appdots functions with fzf.
-  fn --group GROUP [QUERY]      Search within one function group.
+  fn --group GROUP [QUERY]      Search within a function group or group prefix.
   fn --list [QUERY]             Print matching functions without fzf.
   fn --source FUNCTION          Print a function's live definition.
 
@@ -209,7 +221,7 @@ EOF
           --nth=2,3,4,5,6 \
           --prompt='fn> ' \
           --query="$query" \
-          --header='enter: insert  ctrl-e: source  ?: preview  esc: cancel' \
+          --header="$palette_header" \
           --expect=ctrl-e \
           --bind='?:toggle-preview' \
           --preview-window='right,55%,wrap' \

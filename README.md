@@ -148,7 +148,9 @@ fn                  # browse everything
 fn branch           # begin with a search
 fn --list git       # printable, non-interactive view
 fn --source gbs     # inspect one function
-gbh                 # browse only the Git branch family
+gbh                 # browse every Git family with a categorized guide
+gbh push            # find the clean push helper (gps)
+gbh --list          # print every Git helper, ordered by section
 ```
 
 Git functions use consistent families: `gb*` operates on branches, `gr*`
