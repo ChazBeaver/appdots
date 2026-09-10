@@ -35,7 +35,7 @@
   com =   commit --message
   coma    =   commit --all --message
 
-  # 'uncommit' is the one you want to use most of the time to undo a conflict i.e. stashpull
+  # 'uncommit' is the one you want to use most of the time to undo a conflict i.e. gsp
   uncommit = reset --soft HEAD~1
   reset = reset --hard HEAD    
   unstage = restore --staged .

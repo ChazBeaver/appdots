@@ -4,9 +4,13 @@ cava() {
   command cava -p "$config" "$@"
 }
 
+_ad_register cava apps 'cava [ARGUMENTS]' 'Launch Cava with the active Omarchy theme configuration.' run
+
 cam() {
   webcam-launch "${1:-overlay}"
 }
+
+_ad_register cam apps 'cam [MODE]' 'Launch the webcam, using overlay mode by default.' run
 
 # launch Yazi in the notes directory
 notes() {
@@ -14,6 +18,8 @@ notes() {
     [[ -d "$notes_dir" ]] || mkdir -p "$notes_dir"
     yazi "$notes_dir"
 }
+
+_ad_register notes projects 'notes' 'Create the Linux notes directory if needed and open it in Yazi.' run
 
 work () {
   local base="$HOME/Projects/work"
@@ -37,3 +43,5 @@ work () {
 
   cd "$base/$choice" || return 1
 }
+
+_ad_register work projects 'work' 'Choose a repository under ~/Projects/work and change into it.' run

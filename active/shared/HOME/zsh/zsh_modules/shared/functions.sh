@@ -22,6 +22,8 @@ home () {
   cd "$base/$choice" || return 1
 }
 
+_ad_register home projects 'home' 'Choose a repository under ~/Projects/home and change into it.' run
+
 # work() {
 #   local base="$HOME/Projects/work"
 #   local choice
@@ -55,6 +57,8 @@ cx() {
   cd "$prev"
 }
 
+_ad_register cx apps 'cx' 'Launch Codex from ~/.codex, then return to the previous directory.' run
+
 reporoot() {
   local dir="$PWD"
   dir="${dir%/}"
@@ -84,21 +88,29 @@ reporoot() {
   return 1
 }
 
+_ad_register reporoot projects 'reporoot' 'Change to the top-level project directory under Projects/home or Projects/work.' run 'rr'
+
 edit-zshrc() {
     vim $HOME/.zshrc
 }
+
+_ad_register edit-zshrc utilities 'edit-zshrc' 'Open ~/.zshrc in Vim.' run
 
 # Make a Dir and Jump to it Immediately
 mkcd() {
   mkdir -p "$1" && cd "$1"
 }
 
+_ad_register mkcd projects 'mkcd DIRECTORY' 'Create a directory and immediately change into it.' run
+
 # Search History using FZF
-hf() {
+fh() {
   local cmd
   cmd=$(fc -lnr 1 | fzf --tac) || return
   print -z -- "$cmd"
 }
+
+_ad_register fh fzf 'fh' 'Choose a shell-history entry and insert it into the prompt.' view 'hf'
 
 # Yazi launch and Change Directory when closed
 y() {
@@ -110,20 +122,11 @@ y() {
   rm -f "$tmp"
 }
 
+_ad_register y apps 'y [PATH]' 'Launch Yazi and adopt its directory when it exits.' run
+
 # Print a list of Colors for testing
 printcolors() {
   for i in {0..255}; do print -P "%F{$i}Color $i%f"; done
 }
 
-list-functions() {
-  local selected
-
-  selected=$(
-    print -l ${(k)functions} \
-      | sort \
-      | fzf --prompt='functions> ' --height=40% --layout=reverse
-  ) || return
-
-  echo
-  functions "$selected"
-}
+_ad_register printcolors utilities 'printcolors' 'Print the terminal color palette from 0 through 255.' view

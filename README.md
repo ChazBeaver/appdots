@@ -135,6 +135,48 @@ The `appdots` alias drops you into the repo directory from anywhere.
 
 ---
 
+## 🧭 Shell Function Palette
+
+Run `fn` to browse the appdots functions loaded on the current platform. The
+palette searches function names, groups, descriptions, usage, aliases, and
+former names.
+Press Enter to insert a function into the prompt, `Ctrl-E` to inspect its live
+definition, or `?` to toggle its help preview. It never executes a selection.
+
+```zsh
+fn                  # browse everything
+fn branch           # begin with a search
+fn --list git       # printable, non-interactive view
+fn --source gbs     # inspect one function
+gbh                 # browse only the Git branch family
+```
+
+Git functions use consistent families: `gb*` operates on branches, `gr*`
+operates across child repositories, and other Git operations use a compact
+`g*` mnemonic.
+
+| Former name | Current name | Purpose |
+|:------------|:-------------|:--------|
+| `dirgcm` | `grc` | Commit and push child repositories |
+| `dirgpull` | `grp` | Fast-forward child repositories |
+| `dirgpullr` | `grr` | Rebase child repositories |
+| `gbra` | `grs` | Audit child repository status |
+| `gpush` | `gps` | Push the current branch |
+| `gpull` | `gpl` | Pull the current branch |
+| `stashpull` | `gsp` | Stash, pull, and restore work |
+| `mm` | `gmm` | Merge `origin/main` into the current branch |
+| `gbdiff` | `gdf` | List files changed across recent commits |
+| `gbls` | `gbo` | List old remote branches |
+| `gbcvm` | `gbv` | Compare the current branch with its base |
+| `fd` | `fda` | Broad fuzzy directory search |
+| `hf` | `fh` | Fuzzy history search |
+| `list-functions` | `fn` | Browse appdots functions |
+
+Aliases and former names are searchable in `fn`; the former names are
+intentionally no longer callable.
+
+---
+
 ## 🔄 Auto Git Pull
 
 Zsh loads `active/shared/HOME/zsh/zsh_modules/shared/personal-repos-pull.sh` on every new terminal session, which runs `git pull --rebase` on both appdots and hyprdots automatically.

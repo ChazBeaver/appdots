@@ -16,7 +16,7 @@ export FZF_DEFAULT_OPTS="
 "
 
 # Find system directories
-fd() {
+fda() {
   local root="${1:-$HOME}"
   [[ "$1" == "--all" ]] && root="/"
 
@@ -34,14 +34,20 @@ fd() {
   cd -- "$dir"
 }
 
+_ad_register fda fzf 'fda [ROOT|--all]' 'Choose a directory under HOME, a supplied root, or the full filesystem.' run 'fd'
+
 # Find a file to edit
 fe() {
     local file
     file=$(find ${1:-.} -type f 2> /dev/null | fzf --preview 'bat --style=numbers --color=always {} || cat {}' +m) && [ -n "$file" ] && nvim "$file"
 }
 
+_ad_register fe fzf 'fe [ROOT]' 'Choose a file below a directory and open it in Neovim.' run
+
 # Find relative directories
 fcd() {
   local dir
   dir=$(find "${1:-.}" -type d -not -path '*/.*' 2>/dev/null | fzf +m) && cd "$dir"
 }
+
+_ad_register fcd fzf 'fcd [ROOT]' 'Choose a non-hidden directory below a root and change into it.' run

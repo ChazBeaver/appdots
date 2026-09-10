@@ -1,10 +1,13 @@
-# Git Add All; Git Commit; Git Push
-# ALL REPOS IN DIRECTORY
-dirgcm() {
+# =========================
+# Multi-repository helpers (gr*)
+# =========================
+
+# Git Add All; Git Commit; Git Push for all child repos
+grc() {
   local msg="$*"
 
   if [[ -z "$msg" ]]; then
-    echo "❌ Usage: gcmdir \"commit message\""
+    echo "❌ Usage: grc \"commit message\""
     return 1
   fi
 
@@ -14,7 +17,7 @@ dirgcm() {
 
       if [[ -d .git ]]; then
         echo "🚀 [$d] committing..."
-        git aa && git com "$msg" && gpush
+        git aa && git com "$msg" && gps
       else
         echo "⏭️ [$d] skipped (not a git repo)"
       fi
@@ -22,9 +25,10 @@ dirgcm() {
   done
 }
 
-# Git Rebase
-# ALL REPOS IN DIRECTORY
-dirgpullr() {
+_ad_register grc git/repos 'grc "COMMIT MESSAGE"' 'Stage, commit, and push every child Git repository.' danger 'dirgcm gcmdir'
+
+# Git Rebase for all child repos
+grr() {
   emulate -L zsh
   setopt local_options null_glob
 
@@ -65,9 +69,10 @@ dirgpullr() {
   print -P "\n%F{green}✓ $ok%f rebased  %F{red}✗ $fail%f failed  %F{yellow}⊘ $skip%f skipped"
 }
 
-# Git Pull
-# ALL REPOS IN DIRECTORY
-dirgpull() {
+_ad_register grr git/repos 'grr [DIRECTORY]' 'Fetch and rebase-autostash every child Git repository.' danger 'dirgpullr'
+
+# Git Pull for all child repos
+grp() {
   emulate -L zsh
   setopt local_options null_glob
 
@@ -108,8 +113,39 @@ dirgpull() {
   print -P "\n%F{green}✓ $ok%f updated  %F{red}✗ $fail%f failed  %F{yellow}⊘ $skip%f skipped"
 }
 
+_ad_register grp git/repos 'grp [DIRECTORY]' 'Fetch and fast-forward every child Git repository.' danger 'dirgpull'
+
+# Git Repo Status Audit
+grs() {
+  local root="${1:-.}"
+  local green=$'\e[32m'
+  local red=$'\e[31m'
+  local reset=$'\e[0m'
+  local repo name repo_status
+
+  for repo in "$root"/*; do
+    [[ -d "$repo" ]] || continue
+    git -C "$repo" rev-parse --is-inside-work-tree >/dev/null 2>&1 || continue
+
+    name="${repo:t}"
+    repo_status="$(git -C "$repo" status --porcelain 2>/dev/null)"
+
+    if [[ -n "$repo_status" ]]; then
+      printf "%-22s %b\n" "$name" "${red}changes${reset}"
+    else
+      printf "%-22s %b\n" "$name" "${green}clean${reset}"
+    fi
+  done
+}
+
+_ad_register grs git/repos 'grs [DIRECTORY]' 'Show clean or changed status for child Git repositories.' view 'gbra'
+
+# =========================
+# Single-repository sync helpers (g*)
+# =========================
+
 # Git stash current work, pull updates, stash pop work back in place
-stashpull() {
+gsp() {
   local message="stashing to pull latest"
 
   echo "🔒 Stashing current changes..."
@@ -130,8 +166,10 @@ stashpull() {
   echo "✅ Done: pulled latest and reapplied your changes."
 }
 
+_ad_register gsp git/sync 'gsp' 'Stash current work, pull, and reapply the stash.' run 'stashpull'
+
 # Git Merge Main into Feature-Branch
-mm() {
+gmm() {
   # Get the current branch
   local branch
   branch=$(git symbolic-ref --short HEAD 2>/dev/null)
@@ -154,12 +192,14 @@ mm() {
   echo "✅ Merge complete. '$branch' now includes 'origin/main'."
 }
 
+_ad_register gmm git/sync 'gmm' 'Fetch origin and merge origin/main into the current branch.' run 'mm'
+
 # =========================
 # Git Push/Pull helpers
 # =========================
 
 # Git Push Origin Upstream (unchanged)
-gpush() {
+gps() {
   local branch
   branch=$(git symbolic-ref --short HEAD 2>/dev/null)
 
@@ -172,10 +212,12 @@ gpush() {
   git push -u origin "$branch"
 }
 
-# Git Pull Origin (same spirit as gpush)
+_ad_register gps git/sync 'gps' 'Push the current branch to origin and set its upstream.' run 'gpush'
+
+# Git Pull Origin (same spirit as gps)
 # - pulls origin/<current-branch>
-# - does NOT set upstream (pull doesn't need -u; upstream is set by gpush)
-gpull() {
+# - does NOT set upstream (pull doesn't need -u; upstream is set by gps)
+gpl() {
   local branch
   branch=$(git symbolic-ref --short HEAD 2>/dev/null)
 
@@ -188,48 +230,21 @@ gpull() {
   git pull origin "$branch"
 }
 
+_ad_register gpl git/sync 'gpl' 'Pull origin/current-branch into the current branch.' run 'gpull'
+
 # =========================
-# gb* helpers
+# Git branch helpers (gb*)
 # =========================
 
-# ---------- gbh: quick help ----------
+# ---------- gbh: searchable branch help ----------
 gbh() {
-  cat <<'EOF'
-gb* helpers:
-
-  gbh             Show this help.
-  gbl   [repo]      LIST local + origin/* branches for a repo.
-  gbs   [repo]      SWITCH to branch for a repo (fzf; inserts command).
-  gbu <branch>    UPDATE branch -> ex: gbu main
-  gbdiff [n]      LIST files changed from HEAD~n to HEAD (default n=1). ex: gbdiff 2
-  gbp             PRUNE remote-tracking refs (after Fetch); show local branches with upstream gone.
-  gbr   [base]      REPORT (read-only): Active, Merged, Upstream-gone categories.
-  gbd   [base]      DELETE -> Pick "dead" local branches (Merged into base OR Upstream gone) via fzf (multi-select)
-                    - and INSERT a delete command into your prompt (does not run).
-  gbcvm [base]     VIEW "branch(current) vs main[base]" file diff (name-status) for current branch.
-  gbra  [dir]      AUDIT child repos in a directory; show repo name + clean/changes status. Defaults to current dir.
-  gbls            LIST STALE branches (branches whose most recent commit is older than 30 days); exclude main and HEAD
-  
-  gcmdir ["commit message"]  !!USE WITH CAUTION!!  ->  ALL REPOS IN DIRECTORY; Git Add All; Git Commit -m; Git Push
-
-
-  --EXTRA--
-
-  Restore a file from another branch:
-    git restore --source=main -- path/to/file
-
-  Diff two files quickly:
-    git diff main -- path/to/file
-
-  Diff from inside NeoVim:
-    :DiffviewOpen main
-    <leader>dm
-
-EOF
+  fn --group git/branch "$@"
 }
 
+_ad_register gbh help 'gbh [QUERY]' 'Browse the Git branch function family.' view
+
 # ---------- internal helper: choose a sensible base branch ----------
-_gb_base() {
+_ad_gb_base() {
   local base="${1:-}"
 
   if [[ -n "$base" ]]; then
@@ -247,18 +262,22 @@ _gb_base() {
   git branch --show-current 2>/dev/null
 }
 
-# ---------- gbdiff: list files changed from HEAD~N to HEAD ----------
+# =========================
+# Git diff helpers (gd*)
+# =========================
+
+# ---------- gdf: list files changed from HEAD~N to HEAD ----------
 # Usage:
-#   gbdiff       # == git diff --name-only HEAD~1 HEAD
-#   gbdiff 2     # == git diff --name-only HEAD~2 HEAD
-#   gbdiff 7     # == git diff --name-only HEAD~7 HEAD
-gbdiff() {
+#   gdf       # == git diff --name-only HEAD~1 HEAD
+#   gdf 2     # == git diff --name-only HEAD~2 HEAD
+#   gdf 7     # == git diff --name-only HEAD~7 HEAD
+gdf() {
   local n="${1:-1}"
 
   # numeric guard
   case "$n" in
     ''|*[!0-9]*)
-      echo "Usage: gbdiff [number]" >&2
+      echo "Usage: gdf [number]" >&2
       return 1
       ;;
   esac
@@ -268,6 +287,12 @@ gbdiff() {
   git diff --name-only "HEAD~${n}" HEAD
 }
 
+_ad_register gdf git/diff 'gdf [NUMBER]' 'List files changed between HEAD~NUMBER and HEAD.' view 'gbdiff'
+
+# =========================
+# Git branch operations (gb*)
+# =========================
+
 # ---------- gbu: Checkout & Update branch from Origin ----------
 gbu() {
   local branch="$1"
@@ -275,14 +300,16 @@ gbu() {
   git checkout "$branch" && git pull origin "$branch"
 }
 
-gbls() {
+_ad_register gbu git/branch 'gbu BRANCH' 'Check out a branch and pull its matching branch from origin.' run
+
+gbo() {
   # List remote-tracking branches whose last commit is older than 30 days (macOS),
   # excluding */HEAD and */main.
   #
   # Examples:
-  #   gbls
-  #   gbls | wc -l
-  #   gbls | pbcopy
+  #   gbo
+  #   gbo | wc -l
+  #   gbo | pbcopy
 
   # Refresh remotes quietly first
   git fetch --all --prune --quiet || return 1
@@ -303,6 +330,8 @@ gbls() {
   | sort
 }
 
+_ad_register gbo git/branch 'gbo' 'List remote branches whose latest commit is older than 30 days.' run 'gbls'
+
 # ---------- gbl ----------
 gbl() {
   local repo="${1:-$PWD}"
@@ -322,6 +351,8 @@ gbl() {
     | grep -vE '^origin/HEAD$' \
     | sed 's/^/  /'
 }
+
+_ad_register gbl git/branch 'gbl [REPOSITORY]' 'List local and origin branches for a repository.' view
 
 # ---------- gbs ----------
 gbs() {
@@ -355,14 +386,16 @@ gbs() {
   print -z -- "$cmd"
 }
 
-# ---------- gbcvm: branch vs main (renamed from branchvsmain) ----------
+_ad_register gbs git/branch 'gbs [REPOSITORY]' 'Choose a branch and insert its Git switch command into the prompt.' view
+
+# ---------- gbv: branch vs main ----------
 # Compare changes made in current branch to base (defaults to main/master)
 # Shows which files differ (name + status) between base..HEAD, using origin/<base> if present.
-gbcvm() {
+gbv() {
   local base base_ref
   git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "Not a git repo" >&2; return 1; }
 
-  base="$(_gb_base "$1")"
+  base="$(_ad_gb_base "$1")"
 
   # Prefer origin/<base> when it exists; otherwise fall back to local <base>
   if git show-ref --verify --quiet "refs/remotes/origin/${base}"; then
@@ -373,6 +406,8 @@ gbcvm() {
 
   git diff --name-status "${base_ref}...HEAD"
 }
+
+_ad_register gbv git/branch 'gbv [BASE]' 'List current-branch file changes versus a base branch.' view 'gbcvm'
 
 # ---------- gbp: prune remote-tracking branches (safe hygiene) ----------
 gbp() {
@@ -389,10 +424,12 @@ gbp() {
   echo "Tip: run 'gbd' to select and stage delete commands for dead branches."
 }
 
+_ad_register gbp git/branch 'gbp' 'Fetch and prune remotes, then list branches whose upstream is gone.' run
+
 # ---------- gbr: report branch status (read-only; better categories) ----------
 gbr() {
   local base
-  base="$(_gb_base "$1")"
+  base="$(_ad_gb_base "$1")"
 
   git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "Not a git repo" >&2; return 1; }
 
@@ -414,6 +451,8 @@ gbr() {
   git branch -vv | awk '/: gone]/{print $1}'
 }
 
+_ad_register gbr git/branch 'gbr [BASE]' 'Report active, merged, and upstream-gone local branches.' view
+
 # ---------- gbd: pick dead branches -> insert delete cmd (does not execute) ----------
 gbd() {
   local base selection merged_list gone_list cmd
@@ -422,7 +461,7 @@ gbd() {
   command -v fzf >/dev/null 2>&1 || { echo "fzf not found in PATH" >&2; return 1; }
   git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "Not a git repo" >&2; return 1; }
 
-  base="$(_gb_base "$1")"
+  base="$(_ad_gb_base "$1")"
   git fetch --all --prune --quiet || return 1
 
   merged_list="$(
@@ -470,29 +509,4 @@ gbd() {
   print -z -- "$cmd"
 }
 
-# ---------- gbra: Git Branch Repo Audit ----------
-# Usage:
-#   gbra        # scan child repos in current dir
-#   gbra path   # scan child repos in path
-gbra() {
-  local root="${1:-.}"
-  local green=$'\e[32m'
-  local red=$'\e[31m'
-  local reset=$'\e[0m'
-  local repo name repo_status
-
-  for repo in "$root"/*; do
-    [[ -d "$repo" ]] || continue
-    git -C "$repo" rev-parse --is-inside-work-tree >/dev/null 2>&1 || continue
-
-    name="${repo:t}"
-    repo_status="$(git -C "$repo" status --porcelain 2>/dev/null)"
-
-    if [[ -n "$repo_status" ]]; then
-      printf "%-22s %b\n" "$name" "${red}changes${reset}"
-    else
-      printf "%-22s %b\n" "$name" "${green}clean${reset}"
-    fi
-  done
-}
-
+_ad_register gbd git/branch 'gbd [BASE]' 'Choose dead branches and insert their deletion command into the prompt.' danger
