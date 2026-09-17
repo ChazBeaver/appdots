@@ -10,7 +10,7 @@
 # cmd-c / cmd-v / cmd-x are not bound here, so they stay native and cover
 # Omarchy's "universal copy/paste" (SUPER+C / SUPER+V).
 # CAUTION: AeroSpace hotkeys win over app shortcuts. cmd-1..9, cmd-s, cmd-f,
-# cmd-t, cmd-l, cmd-r, cmd-w, cmd-comma and cmd-minus/equal go to the window
+# cmd-l, cmd-r, cmd-w, cmd-comma and cmd-minus/equal go to the window
 # manager, not the app. cmd-tab is reserved by macOS and cannot be bound, so
 # the SUPER+TAB workspace bindings below will not fire.
 #
@@ -111,7 +111,7 @@ cmd-ctrl-alt-h  = 'exec-and-forget pmset sleepnow'              # SUPER+ALT+CTRL
 
 # ---- Window state ------------------------------------------------------------
 cmd-w           = 'close'                                       # SUPER+W close window
-cmd-t           = 'layout floating tiling'                      # SUPER+T toggle floating
+cmd-alt-t       = 'layout floating tiling'                      # SUPER+T toggle floating (moved off cmd-t: Ghostty new tab)
 cmd-o           = 'layout floating'                             # SUPER+O pop window out (no pin on macOS)
 cmd-f           = 'fullscreen --no-outer-gaps'                  # SUPER+F full screen
 cmd-ctrl-f      = 'fullscreen'                                  # SUPER+CTRL+F tiled full screen (keeps gaps)
