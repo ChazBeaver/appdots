@@ -1,0 +1,231 @@
+# AeroSpace config mirroring the Hyprland/Omarchy setup on the Linux machine.
+# Installed by appdots sync.sh at ~/.config/aerospace/aerospace.toml
+# Docs: https://nikitabobko.github.io/AeroSpace/guide
+#
+# MODIFIER MAP (physical key positions match the PC keyboard on the Linux box):
+#   Hyprland SUPER (Win key) -> alt    (Option sits where Win sits)
+#   Hyprland ALT             -> cmd    (Command sits where Alt sits)
+#   Hyprland CTRL            -> ctrl
+#   Hyprland SHIFT           -> shift
+# Native cmd shortcuts (cmd-c/v/x/w/t/q ...) are left to macOS, so they take
+# over the job of Omarchy's "universal copy/paste" (SUPER+C / SUPER+V).
+#
+# CONCEPT MAP:
+#   Hyprland workspace 1..10     -> AeroSpace workspace 1..10 (persistent)
+#   special:scratchpad           -> workspace "S" (toggle with alt-s)
+#   window group (tabs)          -> accordion container (alt-g / alt-ctrl-cmd-arrows)
+#   dwindle split toggle         -> layout horizontal/vertical (alt-j)
+#   swapwindow                   -> swap (alt-shift-arrows)
+#   moveintogroup                -> move (alt-cmd-arrows)
+
+config-version = 2
+
+# Runs once after AeroSpace starts. Uncomment the `borders` line after
+# `brew install FelixKratz/formulae/borders` to get Hyprland-style focus borders
+# (same gradient + inactive grey as Omarchy's looknfeel.lua).
+after-startup-command = [
+  # 'exec-and-forget borders active_color="gradient(top_left=0xff33ccff,bottom_right=0xff00ff99)" inactive_color=0xaa595959 width=4.0',
+]
+
+start-at-login = true
+
+# Reload when this file is saved (run `aerospace reload-config` once to arm it).
+auto-reload-config = true
+
+# Normalisation.
+# - Flattening single-child containers keeps the tree tidy (like dwindle).
+# - Opposite-orientation is OFF on purpose: it would force every nested
+#   accordion ("group") to be vertical, which breaks the left/right tab
+#   navigation below. Groups are always created as h_accordion instead.
+enable-normalization-flatten-containers = true
+enable-normalization-opposite-orientation-for-nested-containers = false
+
+# Accordion = the "group/tabbed" look. Padding shows there are other windows.
+accordion-padding = 30
+
+# Wide monitor tiles side by side, tall monitor stacks. Closest to dwindle.
+default-root-container-layout = 'tiles'
+default-root-container-orientation = 'auto'
+
+# Hyprland warps the cursor on movefocus and on workspace change; do the same.
+on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
+on-focus-changed = ['move-mouse window-lazy-center']
+
+# cmd-h "hide app" has no place in a tiling WM. Undo it automatically.
+automatically-unhide-macos-hidden-apps = true
+
+# Workspaces that exist even when empty, so alt-N always lands somewhere.
+persistent-workspaces = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "S"]
+
+focus-follows-mouse.enabled = false
+key-mapping.preset = 'qwerty'
+
+# Hyprland: gaps_in = 5 (per side, so 10 between windows), gaps_out = 10.
+gaps.inner.horizontal = 10
+gaps.inner.vertical   = 10
+gaps.outer.left       = 10
+gaps.outer.bottom     = 10
+gaps.outer.top        = 10
+gaps.outer.right      = 10
+
+[exec]
+inherit-env-vars = true
+[exec.env-vars]
+PATH = '/opt/homebrew/bin:/opt/homebrew/sbin:${PATH}'
+
+# ---------------------------------------------------------------------------
+# Window rules. Find an app's id with `aerospace list-apps`.
+# ---------------------------------------------------------------------------
+[[on-window-detected]]
+if.app-id = 'com.apple.systempreferences'
+run = 'layout floating'
+
+[[on-window-detected]]
+if.app-id = 'com.apple.calculator'
+run = 'layout floating'
+
+[[on-window-detected]]
+if.app-id = 'org.keepassxc.keepassxc'
+run = 'layout floating'
+
+# ---------------------------------------------------------------------------
+# Bindings. Every binding lives here; AeroSpace has no defaults of its own.
+# Comments give the Hyprland/Omarchy binding each line replaces.
+# ---------------------------------------------------------------------------
+[mode.main.binding]
+
+# ---- Applications (kept minimal: apps differ between machines) -------------
+alt-enter       = 'exec-and-forget open -na Ghostty'            # SUPER+RETURN  terminal
+alt-shift-f     = 'exec-and-forget open ~'                      # SUPER+SHIFT+F file manager
+# alt-shift-enter = 'exec-and-forget open -na "Safari"'         # SUPER+SHIFT+RETURN browser
+# alt-shift-b     = 'exec-and-forget open -na "Safari"'         # SUPER+SHIFT+B browser
+
+# ---- System ----------------------------------------------------------------
+alt-r           = 'reload-config'                               # SUPER+R restart shell
+alt-ctrl-l      = 'exec-and-forget pmset displaysleepnow'       # SUPER+CTRL+L lock (needs "require password immediately")
+alt-ctrl-cmd-h  = 'exec-and-forget pmset sleepnow'              # SUPER+ALT+CTRL+H suspend
+
+# ---- Window state ------------------------------------------------------------
+alt-w           = 'close'                                       # SUPER+W close window
+alt-t           = 'layout floating tiling'                      # SUPER+T toggle floating
+alt-o           = 'layout floating'                             # SUPER+O pop window out (no pin on macOS)
+alt-f           = 'fullscreen --no-outer-gaps'                  # SUPER+F full screen
+alt-ctrl-f      = 'fullscreen'                                  # SUPER+CTRL+F tiled full screen (keeps gaps)
+alt-cmd-f       = 'macos-native-fullscreen'                     # SUPER+ALT+F full width (native mac fullscreen)
+alt-j           = 'layout horizontal vertical'                  # SUPER+J toggle split direction
+alt-home        = 'balance-sizes'                               # SUPER+Home restore window width (equalise)
+alt-l           = 'layout --root tiles accordion'               # SUPER+L toggle workspace layout (tiles <-> tabbed)
+ctrl-cmd-forwardDelete = 'close-all-windows-but-current'        # CTRL+ALT+DELETE close all (but this one)
+
+# ---- Focus (crosses monitors like Hyprland's movefocus) --------------------
+alt-left        = 'focus --boundaries all-monitors-outer-frame left'   # SUPER+LEFT
+alt-right       = 'focus --boundaries all-monitors-outer-frame right'  # SUPER+RIGHT
+alt-up          = 'focus --boundaries all-monitors-outer-frame up'     # SUPER+UP
+alt-down        = 'focus --boundaries all-monitors-outer-frame down'   # SUPER+DOWN
+
+# ---- Swap windows (SUPER+SHIFT+arrows = swapwindow) ------------------------
+alt-shift-left  = 'swap left'
+alt-shift-right = 'swap right'
+alt-shift-up    = 'swap up'
+alt-shift-down  = 'swap down'
+
+# ---- Resize (SUPER+minus/equal; SHIFT = height; ALT = little; CTRL = a lot)
+alt-minus            = 'resize width -100'
+alt-equal            = 'resize width +100'
+alt-shift-minus      = 'resize height -100'
+alt-shift-equal      = 'resize height +100'
+alt-cmd-minus        = 'resize width -25'
+alt-cmd-equal        = 'resize width +25'
+alt-shift-cmd-minus  = 'resize height -25'
+alt-shift-cmd-equal  = 'resize height +25'
+alt-ctrl-minus       = 'resize width -300'
+alt-ctrl-equal       = 'resize width +300'
+alt-ctrl-shift-minus = 'resize height -300'
+alt-ctrl-shift-equal = 'resize height +300'
+
+# ---- Workspaces (SUPER+N switch, SUPER+SHIFT+N move+follow, +ALT = silent) -
+alt-1 = 'workspace 1'
+alt-2 = 'workspace 2'
+alt-3 = 'workspace 3'
+alt-4 = 'workspace 4'
+alt-5 = 'workspace 5'
+alt-6 = 'workspace 6'
+alt-7 = 'workspace 7'
+alt-8 = 'workspace 8'
+alt-9 = 'workspace 9'
+alt-0 = 'workspace 10'
+
+alt-shift-1 = 'move-node-to-workspace --focus-follows-window 1'
+alt-shift-2 = 'move-node-to-workspace --focus-follows-window 2'
+alt-shift-3 = 'move-node-to-workspace --focus-follows-window 3'
+alt-shift-4 = 'move-node-to-workspace --focus-follows-window 4'
+alt-shift-5 = 'move-node-to-workspace --focus-follows-window 5'
+alt-shift-6 = 'move-node-to-workspace --focus-follows-window 6'
+alt-shift-7 = 'move-node-to-workspace --focus-follows-window 7'
+alt-shift-8 = 'move-node-to-workspace --focus-follows-window 8'
+alt-shift-9 = 'move-node-to-workspace --focus-follows-window 9'
+alt-shift-0 = 'move-node-to-workspace --focus-follows-window 10'
+
+alt-shift-cmd-1 = 'move-node-to-workspace 1'
+alt-shift-cmd-2 = 'move-node-to-workspace 2'
+alt-shift-cmd-3 = 'move-node-to-workspace 3'
+alt-shift-cmd-4 = 'move-node-to-workspace 4'
+alt-shift-cmd-5 = 'move-node-to-workspace 5'
+alt-shift-cmd-6 = 'move-node-to-workspace 6'
+alt-shift-cmd-7 = 'move-node-to-workspace 7'
+alt-shift-cmd-8 = 'move-node-to-workspace 8'
+alt-shift-cmd-9 = 'move-node-to-workspace 9'
+alt-shift-cmd-0 = 'move-node-to-workspace 10'
+
+# SUPER+TAB / SUPER+SHIFT+TAB: next/prev *occupied* workspace (Hyprland e+1/e-1)
+alt-tab         = 'list-workspaces --monitor focused --empty no | workspace --stdin --wrap-around next'
+alt-shift-tab   = 'list-workspaces --monitor focused --empty no | workspace --stdin --wrap-around prev'
+alt-ctrl-tab    = 'workspace-back-and-forth'                    # SUPER+CTRL+TAB former workspace
+
+# SUPER+comma / SUPER+period: adjacent workspace, empty ones included (+1/-1)
+alt-comma        = 'workspace --wrap-around prev'
+alt-period       = 'workspace --wrap-around next'
+alt-shift-comma  = 'move-node-to-workspace --wrap-around --focus-follows-window prev'
+alt-shift-period = 'move-node-to-workspace --wrap-around --focus-follows-window next'
+
+# ---- Scratchpad (special:scratchpad -> workspace S) --------------------------
+alt-s           = 'workspace --fail-if-noop S || workspace-back-and-forth'   # SUPER+S toggle
+alt-cmd-s       = 'move-node-to-workspace S'                                 # SUPER+ALT+S send to scratchpad
+
+# ---- Groups (Hyprland tabbed groups -> accordion containers) ----------------
+# alt-g toggles the focused window's container between tiled and tabbed.
+# On a flat workspace that tabs everything; use alt-ctrl-cmd-<arrow> to make a
+# group out of just this window and its neighbour.
+alt-g           = 'layout tiles h_accordion'                    # SUPER+G toggle group
+alt-cmd-g       = 'flatten-workspace-tree'                      # SUPER+ALT+G dissolve groups/splits on workspace
+
+alt-ctrl-cmd-left  = ['join-with left',  'layout h_accordion']  # group with the window on the left
+alt-ctrl-cmd-right = ['join-with right', 'layout h_accordion']  # group with the window on the right
+alt-ctrl-cmd-up    = ['join-with up',    'layout h_accordion']  # group with the window above
+alt-ctrl-cmd-down  = ['join-with down',  'layout h_accordion']  # group with the window below
+
+# SUPER+ALT+arrows: move window into the group/container in that direction.
+# Moving past the edge of a group moves the window back out of it.
+alt-cmd-left    = 'move left'
+alt-cmd-right   = 'move right'
+alt-cmd-up      = 'move up'
+alt-cmd-down    = 'move down'
+
+# Tab navigation inside a group (all four Omarchy spellings).
+alt-cmd-tab        = 'focus right'                              # SUPER+ALT+TAB next in group
+alt-cmd-shift-tab  = 'focus left'                               # SUPER+ALT+SHIFT+TAB prev in group
+alt-ctrl-left      = 'focus left'                               # SUPER+CTRL+LEFT
+alt-ctrl-right     = 'focus right'                              # SUPER+CTRL+RIGHT
+alt-cmd-comma      = 'focus left'                               # SUPER+ALT+comma
+alt-cmd-period     = 'focus right'                              # SUPER+ALT+period
+
+alt-ctrl-cmd-comma  = 'swap left'                               # SUPER+ALT+CTRL+comma  reorder tab left
+alt-ctrl-cmd-period = 'swap right'                              # SUPER+ALT+CTRL+period reorder tab right
+
+# ---- Monitors ------------------------------------------------------------------
+ctrl-cmd-tab        = 'focus-monitor --wrap-around next'        # CTRL+ALT+TAB
+ctrl-cmd-shift-tab  = 'focus-monitor --wrap-around prev'        # CTRL+ALT+SHIFT+TAB
+alt-shift-cmd-left  = 'move-workspace-to-monitor left'          # SUPER+SHIFT+ALT+LEFT
+alt-shift-cmd-right = 'move-workspace-to-monitor right'         # SUPER+SHIFT+ALT+RIGHT
+alt-shift-cmd-up    = 'move-workspace-to-monitor up'            # SUPER+SHIFT+ALT+UP
+alt-shift-cmd-down  = 'move-workspace-to-monitor down'          # SUPER+SHIFT+ALT+DOWN

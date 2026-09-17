@@ -20,6 +20,7 @@ BREW_FORMULAE=(
 
 BREW_CASKS=(
   keepassxc
+  nikitabobko/tap/aerospace # tiling WM, config in active/macos/.config/aerospace
   kitty
   libreoffice
   font-fira-code-nerd-font
