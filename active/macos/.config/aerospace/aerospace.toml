@@ -2,25 +2,21 @@
 # Installed by appdots sync.sh at ~/.config/aerospace/aerospace.toml
 # Docs: https://nikitabobko.github.io/AeroSpace/guide
 #
-# MODIFIER MAP:
-#   Hyprland SUPER (Win key) -> cmd    (Command)
-#   Hyprland ALT             -> alt    (Option)
+# MODIFIER MAP (physical key positions match the PC keyboard on the Linux box):
+#   Hyprland SUPER (Win key) -> alt    (Option sits where Win sits)
+#   Hyprland ALT             -> cmd    (Command sits where Alt sits)
 #   Hyprland CTRL            -> ctrl
 #   Hyprland SHIFT           -> shift
-# cmd-c / cmd-v / cmd-x are not bound here, so they stay native and cover
-# Omarchy's "universal copy/paste" (SUPER+C / SUPER+V).
-# CAUTION: AeroSpace hotkeys win over app shortcuts. cmd-1..9, cmd-s, cmd-f,
-# cmd-t, cmd-l, cmd-r, cmd-w, cmd-comma and cmd-minus/equal go to the window
-# manager, not the app. cmd-tab is reserved by macOS and cannot be bound, so
-# the SUPER+TAB workspace bindings below will not fire.
+# Native cmd shortcuts (cmd-c/v/x/w/t/q ...) are left to macOS, so they take
+# over the job of Omarchy's "universal copy/paste" (SUPER+C / SUPER+V).
 #
 # CONCEPT MAP:
 #   Hyprland workspace 1..10     -> AeroSpace workspace 1..10 (persistent)
-#   special:scratchpad           -> workspace "S" (toggle with cmd-s)
-#   window group (tabs)          -> accordion container (cmd-g / cmd-ctrl-alt-arrows)
-#   dwindle split toggle         -> layout horizontal/vertical (cmd-j)
-#   swapwindow                   -> swap (cmd-shift-arrows)
-#   moveintogroup                -> move (cmd-alt-arrows)
+#   special:scratchpad           -> workspace "S" (toggle with alt-s)
+#   window group (tabs)          -> accordion container (alt-g / alt-ctrl-cmd-arrows)
+#   dwindle split toggle         -> layout horizontal/vertical (alt-j)
+#   swapwindow                   -> swap (alt-shift-arrows)
+#   moveintogroup                -> move (alt-cmd-arrows)
 
 config-version = 2
 
@@ -58,7 +54,7 @@ on-focus-changed = ['move-mouse window-lazy-center']
 # cmd-h "hide app" has no place in a tiling WM. Undo it automatically.
 automatically-unhide-macos-hidden-apps = true
 
-# Workspaces that exist even when empty, so cmd-N always lands somewhere.
+# Workspaces that exist even when empty, so alt-N always lands somewhere.
 persistent-workspaces = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "S"]
 
 focus-follows-mouse.enabled = false
@@ -99,137 +95,137 @@ run = 'layout floating'
 [mode.main.binding]
 
 # ---- Applications (kept minimal: apps differ between machines) -------------
-cmd-enter       = 'exec-and-forget open -na Ghostty'            # SUPER+RETURN  terminal
-cmd-shift-f     = 'exec-and-forget open ~'                      # SUPER+SHIFT+F file manager
-# cmd-shift-enter = 'exec-and-forget open -na "Safari"'         # SUPER+SHIFT+RETURN browser
-# cmd-shift-b     = 'exec-and-forget open -na "Safari"'         # SUPER+SHIFT+B browser
+alt-enter       = 'exec-and-forget open -na Ghostty'            # SUPER+RETURN  terminal
+alt-shift-f     = 'exec-and-forget open ~'                      # SUPER+SHIFT+F file manager
+# alt-shift-enter = 'exec-and-forget open -na "Safari"'         # SUPER+SHIFT+RETURN browser
+# alt-shift-b     = 'exec-and-forget open -na "Safari"'         # SUPER+SHIFT+B browser
 
 # ---- System ----------------------------------------------------------------
-cmd-r           = 'reload-config'                               # SUPER+R restart shell
-cmd-ctrl-l      = 'exec-and-forget pmset displaysleepnow'       # SUPER+CTRL+L lock (needs "require password immediately")
-cmd-ctrl-alt-h  = 'exec-and-forget pmset sleepnow'              # SUPER+ALT+CTRL+H suspend
+alt-r           = 'reload-config'                               # SUPER+R restart shell
+alt-ctrl-l      = 'exec-and-forget pmset displaysleepnow'       # SUPER+CTRL+L lock (needs "require password immediately")
+alt-ctrl-cmd-h  = 'exec-and-forget pmset sleepnow'              # SUPER+ALT+CTRL+H suspend
 
 # ---- Window state ------------------------------------------------------------
-cmd-w           = 'close'                                       # SUPER+W close window
-cmd-t           = 'layout floating tiling'                      # SUPER+T toggle floating
-cmd-o           = 'layout floating'                             # SUPER+O pop window out (no pin on macOS)
-cmd-f           = 'fullscreen --no-outer-gaps'                  # SUPER+F full screen
-cmd-ctrl-f      = 'fullscreen'                                  # SUPER+CTRL+F tiled full screen (keeps gaps)
-cmd-alt-f       = 'macos-native-fullscreen'                     # SUPER+ALT+F full width (native mac fullscreen)
-cmd-j           = 'layout horizontal vertical'                  # SUPER+J toggle split direction
-cmd-home        = 'balance-sizes'                               # SUPER+Home restore window width (equalise)
-cmd-l           = 'layout --root tiles accordion'               # SUPER+L toggle workspace layout (tiles <-> tabbed)
-ctrl-alt-forwardDelete = 'close-all-windows-but-current'        # CTRL+ALT+DELETE close all (but this one)
+alt-w           = 'close'                                       # SUPER+W close window
+alt-t           = 'layout floating tiling'                      # SUPER+T toggle floating
+alt-o           = 'layout floating'                             # SUPER+O pop window out (no pin on macOS)
+alt-f           = 'fullscreen --no-outer-gaps'                  # SUPER+F full screen
+alt-ctrl-f      = 'fullscreen'                                  # SUPER+CTRL+F tiled full screen (keeps gaps)
+alt-cmd-f       = 'macos-native-fullscreen'                     # SUPER+ALT+F full width (native mac fullscreen)
+alt-j           = 'layout horizontal vertical'                  # SUPER+J toggle split direction
+alt-home        = 'balance-sizes'                               # SUPER+Home restore window width (equalise)
+alt-l           = 'layout --root tiles accordion'               # SUPER+L toggle workspace layout (tiles <-> tabbed)
+ctrl-cmd-forwardDelete = 'close-all-windows-but-current'        # CTRL+ALT+DELETE close all (but this one)
 
 # ---- Focus (crosses monitors like Hyprland's movefocus) --------------------
-cmd-left        = 'focus --boundaries all-monitors-outer-frame left'   # SUPER+LEFT
-cmd-right       = 'focus --boundaries all-monitors-outer-frame right'  # SUPER+RIGHT
-cmd-up          = 'focus --boundaries all-monitors-outer-frame up'     # SUPER+UP
-cmd-down        = 'focus --boundaries all-monitors-outer-frame down'   # SUPER+DOWN
+alt-left        = 'focus --boundaries all-monitors-outer-frame left'   # SUPER+LEFT
+alt-right       = 'focus --boundaries all-monitors-outer-frame right'  # SUPER+RIGHT
+alt-up          = 'focus --boundaries all-monitors-outer-frame up'     # SUPER+UP
+alt-down        = 'focus --boundaries all-monitors-outer-frame down'   # SUPER+DOWN
 
 # ---- Swap windows (SUPER+SHIFT+arrows = swapwindow) ------------------------
-cmd-shift-left  = 'swap left'
-cmd-shift-right = 'swap right'
-cmd-shift-up    = 'swap up'
-cmd-shift-down  = 'swap down'
+alt-shift-left  = 'swap left'
+alt-shift-right = 'swap right'
+alt-shift-up    = 'swap up'
+alt-shift-down  = 'swap down'
 
 # ---- Resize (SUPER+minus/equal; SHIFT = height; ALT = little; CTRL = a lot)
-cmd-minus            = 'resize width -100'
-cmd-equal            = 'resize width +100'
-cmd-shift-minus      = 'resize height -100'
-cmd-shift-equal      = 'resize height +100'
-cmd-alt-minus        = 'resize width -25'
-cmd-alt-equal        = 'resize width +25'
-cmd-shift-alt-minus  = 'resize height -25'
-cmd-shift-alt-equal  = 'resize height +25'
-cmd-ctrl-minus       = 'resize width -300'
-cmd-ctrl-equal       = 'resize width +300'
-cmd-ctrl-shift-minus = 'resize height -300'
-cmd-ctrl-shift-equal = 'resize height +300'
+alt-minus            = 'resize width -100'
+alt-equal            = 'resize width +100'
+alt-shift-minus      = 'resize height -100'
+alt-shift-equal      = 'resize height +100'
+alt-cmd-minus        = 'resize width -25'
+alt-cmd-equal        = 'resize width +25'
+alt-shift-cmd-minus  = 'resize height -25'
+alt-shift-cmd-equal  = 'resize height +25'
+alt-ctrl-minus       = 'resize width -300'
+alt-ctrl-equal       = 'resize width +300'
+alt-ctrl-shift-minus = 'resize height -300'
+alt-ctrl-shift-equal = 'resize height +300'
 
 # ---- Workspaces (SUPER+N switch, SUPER+SHIFT+N move+follow, +ALT = silent) -
-cmd-1 = 'workspace 1'
-cmd-2 = 'workspace 2'
-cmd-3 = 'workspace 3'
-cmd-4 = 'workspace 4'
-cmd-5 = 'workspace 5'
-cmd-6 = 'workspace 6'
-cmd-7 = 'workspace 7'
-cmd-8 = 'workspace 8'
-cmd-9 = 'workspace 9'
-cmd-0 = 'workspace 10'
+alt-1 = 'workspace 1'
+alt-2 = 'workspace 2'
+alt-3 = 'workspace 3'
+alt-4 = 'workspace 4'
+alt-5 = 'workspace 5'
+alt-6 = 'workspace 6'
+alt-7 = 'workspace 7'
+alt-8 = 'workspace 8'
+alt-9 = 'workspace 9'
+alt-0 = 'workspace 10'
 
-cmd-shift-1 = 'move-node-to-workspace --focus-follows-window 1'
-cmd-shift-2 = 'move-node-to-workspace --focus-follows-window 2'
-cmd-shift-3 = 'move-node-to-workspace --focus-follows-window 3'
-cmd-shift-4 = 'move-node-to-workspace --focus-follows-window 4'
-cmd-shift-5 = 'move-node-to-workspace --focus-follows-window 5'
-cmd-shift-6 = 'move-node-to-workspace --focus-follows-window 6'
-cmd-shift-7 = 'move-node-to-workspace --focus-follows-window 7'
-cmd-shift-8 = 'move-node-to-workspace --focus-follows-window 8'
-cmd-shift-9 = 'move-node-to-workspace --focus-follows-window 9'
-cmd-shift-0 = 'move-node-to-workspace --focus-follows-window 10'
+alt-shift-1 = 'move-node-to-workspace --focus-follows-window 1'
+alt-shift-2 = 'move-node-to-workspace --focus-follows-window 2'
+alt-shift-3 = 'move-node-to-workspace --focus-follows-window 3'
+alt-shift-4 = 'move-node-to-workspace --focus-follows-window 4'
+alt-shift-5 = 'move-node-to-workspace --focus-follows-window 5'
+alt-shift-6 = 'move-node-to-workspace --focus-follows-window 6'
+alt-shift-7 = 'move-node-to-workspace --focus-follows-window 7'
+alt-shift-8 = 'move-node-to-workspace --focus-follows-window 8'
+alt-shift-9 = 'move-node-to-workspace --focus-follows-window 9'
+alt-shift-0 = 'move-node-to-workspace --focus-follows-window 10'
 
-cmd-shift-alt-1 = 'move-node-to-workspace 1'
-cmd-shift-alt-2 = 'move-node-to-workspace 2'
-cmd-shift-alt-3 = 'move-node-to-workspace 3'
-cmd-shift-alt-4 = 'move-node-to-workspace 4'
-cmd-shift-alt-5 = 'move-node-to-workspace 5'
-cmd-shift-alt-6 = 'move-node-to-workspace 6'
-cmd-shift-alt-7 = 'move-node-to-workspace 7'
-cmd-shift-alt-8 = 'move-node-to-workspace 8'
-cmd-shift-alt-9 = 'move-node-to-workspace 9'
-cmd-shift-alt-0 = 'move-node-to-workspace 10'
+alt-shift-cmd-1 = 'move-node-to-workspace 1'
+alt-shift-cmd-2 = 'move-node-to-workspace 2'
+alt-shift-cmd-3 = 'move-node-to-workspace 3'
+alt-shift-cmd-4 = 'move-node-to-workspace 4'
+alt-shift-cmd-5 = 'move-node-to-workspace 5'
+alt-shift-cmd-6 = 'move-node-to-workspace 6'
+alt-shift-cmd-7 = 'move-node-to-workspace 7'
+alt-shift-cmd-8 = 'move-node-to-workspace 8'
+alt-shift-cmd-9 = 'move-node-to-workspace 9'
+alt-shift-cmd-0 = 'move-node-to-workspace 10'
 
 # SUPER+TAB / SUPER+SHIFT+TAB: next/prev *occupied* workspace (Hyprland e+1/e-1)
-cmd-tab         = 'list-workspaces --monitor focused --empty no | workspace --stdin --wrap-around next'
-cmd-shift-tab   = 'list-workspaces --monitor focused --empty no | workspace --stdin --wrap-around prev'
-cmd-ctrl-tab    = 'workspace-back-and-forth'                    # SUPER+CTRL+TAB former workspace
+alt-tab         = 'list-workspaces --monitor focused --empty no | workspace --stdin --wrap-around next'
+alt-shift-tab   = 'list-workspaces --monitor focused --empty no | workspace --stdin --wrap-around prev'
+alt-ctrl-tab    = 'workspace-back-and-forth'                    # SUPER+CTRL+TAB former workspace
 
 # SUPER+comma / SUPER+period: adjacent workspace, empty ones included (+1/-1)
-cmd-comma        = 'workspace --wrap-around prev'
-cmd-period       = 'workspace --wrap-around next'
-cmd-shift-comma  = 'move-node-to-workspace --wrap-around --focus-follows-window prev'
-cmd-shift-period = 'move-node-to-workspace --wrap-around --focus-follows-window next'
+alt-comma        = 'workspace --wrap-around prev'
+alt-period       = 'workspace --wrap-around next'
+alt-shift-comma  = 'move-node-to-workspace --wrap-around --focus-follows-window prev'
+alt-shift-period = 'move-node-to-workspace --wrap-around --focus-follows-window next'
 
 # ---- Scratchpad (special:scratchpad -> workspace S) --------------------------
-cmd-s           = 'workspace --fail-if-noop S || workspace-back-and-forth'   # SUPER+S toggle
-cmd-alt-s       = 'move-node-to-workspace S'                                 # SUPER+ALT+S send to scratchpad
+alt-s           = 'workspace --fail-if-noop S || workspace-back-and-forth'   # SUPER+S toggle
+alt-cmd-s       = 'move-node-to-workspace S'                                 # SUPER+ALT+S send to scratchpad
 
 # ---- Groups (Hyprland tabbed groups -> accordion containers) ----------------
-# cmd-g toggles the focused window's container between tiled and tabbed.
-# On a flat workspace that tabs everything; use cmd-ctrl-alt-<arrow> to make a
+# alt-g toggles the focused window's container between tiled and tabbed.
+# On a flat workspace that tabs everything; use alt-ctrl-cmd-<arrow> to make a
 # group out of just this window and its neighbour.
-cmd-g           = 'layout tiles h_accordion'                    # SUPER+G toggle group
-cmd-alt-g       = 'flatten-workspace-tree'                      # SUPER+ALT+G dissolve groups/splits on workspace
+alt-g           = 'layout tiles h_accordion'                    # SUPER+G toggle group
+alt-cmd-g       = 'flatten-workspace-tree'                      # SUPER+ALT+G dissolve groups/splits on workspace
 
-cmd-ctrl-alt-left  = ['join-with left',  'layout h_accordion']  # group with the window on the left
-cmd-ctrl-alt-right = ['join-with right', 'layout h_accordion']  # group with the window on the right
-cmd-ctrl-alt-up    = ['join-with up',    'layout h_accordion']  # group with the window above
-cmd-ctrl-alt-down  = ['join-with down',  'layout h_accordion']  # group with the window below
+alt-ctrl-cmd-left  = ['join-with left',  'layout h_accordion']  # group with the window on the left
+alt-ctrl-cmd-right = ['join-with right', 'layout h_accordion']  # group with the window on the right
+alt-ctrl-cmd-up    = ['join-with up',    'layout h_accordion']  # group with the window above
+alt-ctrl-cmd-down  = ['join-with down',  'layout h_accordion']  # group with the window below
 
 # SUPER+ALT+arrows: move window into the group/container in that direction.
 # Moving past the edge of a group moves the window back out of it.
-cmd-alt-left    = 'move left'
-cmd-alt-right   = 'move right'
-cmd-alt-up      = 'move up'
-cmd-alt-down    = 'move down'
+alt-cmd-left    = 'move left'
+alt-cmd-right   = 'move right'
+alt-cmd-up      = 'move up'
+alt-cmd-down    = 'move down'
 
 # Tab navigation inside a group (all four Omarchy spellings).
-cmd-alt-tab        = 'focus right'                              # SUPER+ALT+TAB next in group
-cmd-alt-shift-tab  = 'focus left'                               # SUPER+ALT+SHIFT+TAB prev in group
-cmd-ctrl-left      = 'focus left'                               # SUPER+CTRL+LEFT
-cmd-ctrl-right     = 'focus right'                              # SUPER+CTRL+RIGHT
-cmd-alt-comma      = 'focus left'                               # SUPER+ALT+comma
-cmd-alt-period     = 'focus right'                              # SUPER+ALT+period
+alt-cmd-tab        = 'focus right'                              # SUPER+ALT+TAB next in group
+alt-cmd-shift-tab  = 'focus left'                               # SUPER+ALT+SHIFT+TAB prev in group
+alt-ctrl-left      = 'focus left'                               # SUPER+CTRL+LEFT
+alt-ctrl-right     = 'focus right'                              # SUPER+CTRL+RIGHT
+alt-cmd-comma      = 'focus left'                               # SUPER+ALT+comma
+alt-cmd-period     = 'focus right'                              # SUPER+ALT+period
 
-cmd-ctrl-alt-comma  = 'swap left'                               # SUPER+ALT+CTRL+comma  reorder tab left
-cmd-ctrl-alt-period = 'swap right'                              # SUPER+ALT+CTRL+period reorder tab right
+alt-ctrl-cmd-comma  = 'swap left'                               # SUPER+ALT+CTRL+comma  reorder tab left
+alt-ctrl-cmd-period = 'swap right'                              # SUPER+ALT+CTRL+period reorder tab right
 
 # ---- Monitors ------------------------------------------------------------------
-ctrl-alt-tab        = 'focus-monitor --wrap-around next'        # CTRL+ALT+TAB
-ctrl-alt-shift-tab  = 'focus-monitor --wrap-around prev'        # CTRL+ALT+SHIFT+TAB
-cmd-shift-alt-left  = 'move-workspace-to-monitor left'          # SUPER+SHIFT+ALT+LEFT
-cmd-shift-alt-right = 'move-workspace-to-monitor right'         # SUPER+SHIFT+ALT+RIGHT
-cmd-shift-alt-up    = 'move-workspace-to-monitor up'            # SUPER+SHIFT+ALT+UP
-cmd-shift-alt-down  = 'move-workspace-to-monitor down'          # SUPER+SHIFT+ALT+DOWN
+ctrl-cmd-tab        = 'focus-monitor --wrap-around next'        # CTRL+ALT+TAB
+ctrl-cmd-shift-tab  = 'focus-monitor --wrap-around prev'        # CTRL+ALT+SHIFT+TAB
+alt-shift-cmd-left  = 'move-workspace-to-monitor left'          # SUPER+SHIFT+ALT+LEFT
+alt-shift-cmd-right = 'move-workspace-to-monitor right'         # SUPER+SHIFT+ALT+RIGHT
+alt-shift-cmd-up    = 'move-workspace-to-monitor up'            # SUPER+SHIFT+ALT+UP
+alt-shift-cmd-down  = 'move-workspace-to-monitor down'          # SUPER+SHIFT+ALT+DOWN
