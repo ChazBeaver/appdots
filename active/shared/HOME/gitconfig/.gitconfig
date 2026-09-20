@@ -1,0 +1,81 @@
+[user]
+  name = User Name
+  email = username@email.com
+[includeIf "gitdir:~/Projects/work/"]
+  path = ~/.gitconfig.work
+[includeIf "gitdir:~/Projects/home/"]
+  path = ~/.gitconfig.home
+[color]
+  ui = true
+[core]
+  autocrlf = input
+  editor = nvim
+	hooksPath = ~/.config/git/hooks
+  # excludesfile = ~/.gitignore_home  <-- Define the ingore file to be referenced
+  # excludesfile = ~/.gitignore_work  <-- Define the ingore file to be referenced
+  # Place these files here for global or in the .gitconfig_<work||home> to be directory specific
+[diff]
+  tool = nvimdiff
+[difftool "nvimdiff"]
+  cmd = "nvim -d $LOCAL $REMOTE"
+[merge]
+  tool = nvimdiff
+[mergetool "nvimdiff"]
+  cmd = "nvim -d $LOCAL $REMOTE $BASE $MERGED -c '$$wincmd w' -c 'wincmd J'"
+[alias]
+  # lists all of the Git aliases
+  alias   =   config --get-regexp '^alias.*'
+  econfig = config --global -e
+
+  s   =   status
+  ss  =   status --short
+  ssb  =   status --short --branch
+
+  co  =   commit
+  com =   commit --message
+  coma    =   commit --all --message
+
+  # 'uncommit' is the one you want to use most of the time to undo a conflict i.e. gsp
+  uncommit = reset --soft HEAD~1
+  reset = reset --hard HEAD    
+  unstage = restore --staged .
+
+  # discards changes made to the working directory, effectively resetting it to the last commit
+  cleandir = checkout .
+
+  a   =   add
+  aa  =   add --all
+
+  rb  =   rebase
+  rbi =   rebase --interactive
+  rba =   rebase --abort
+  rbc =   rebase --continue
+  rbs =   rebase --skip
+
+  # fetches changes from the remote repository and rebases the current branch on top of those changes
+  pr  =   pull --rebase
+
+  branches    =   branch --all
+  branchrename = branch --move
+
+  remoteurl = config --get remote.origin.url
+  remotestatus = remote show origin
+
+  branchesdiffed = branch | Select-String -SimpleMatch "indiff" -CaseSensitive:$false
+  branchesundiffed = branch | Select-String -NotMatch -SimpleMatch "indiff" -CaseSensitive:$false
+
+  unpushed    =   log --branches --not --remotes --decorate=full --oneline
+
+  totalcommits = log --all --pretty=oneline | Measure-Object -Line | Select-Object -ExpandProperty Lines
+
+  todosfind = grep --extended-regexp -I --line-number --break --heading --color=auto "TODO|FIXME"
+  todoscount =  grep --extended-regexp -I --line-number --count "TODO|FIXME"
+  todosnamefiles = grep --extended-regexp -I --name-only "TODO|FIXME"
+
+  difftool-s = difftool --staged
+  diff-s = diff --staged
+
+  lg = log --graph --decorate -30 --all --topo-order --date=format-local:'%Y-%m-%d %H:%M:%S' --pretty=format:'%C(cyan)%h%Creset %C(black bold)%ad%Creset%C(auto)%d %s'
+
+[init]
+	defaultBranch = main

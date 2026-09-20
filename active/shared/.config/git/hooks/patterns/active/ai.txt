@@ -1,0 +1,3 @@
+# AI / LLM provider keys (covers OpenAI, Anthropic, LiteLLM sk- keys)
+sk-[A-Za-z0-9_-]{16,}
+AIza[0-9A-Za-z_-]{35}

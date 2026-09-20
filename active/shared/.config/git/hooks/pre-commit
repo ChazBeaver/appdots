@@ -1,0 +1,34 @@
+#!/usr/bin/env zsh
+emulate -L zsh
+
+# ---------- 1. secret scan (your guard) ----------
+pattern_dir="${0:A:h}/patterns/active"
+files=($pattern_dir/*.txt(N))
+if (( ${#files} == 0 )); then
+  echo "guard: no active pattern files in $pattern_dir — refusing to commit blind."; exit 1
+fi
+patterns=("${(@f)$(cat -- $files | grep -vE '^[[:space:]]*(#|$)')}")
+patterns=(${(M)patterns:#?*})
+(( ${#patterns} == 0 )) && { echo "guard: no usable patterns — refusing."; exit 1; }
+
+staged=$(git diff --cached --name-only --diff-filter=ACM)
+if [[ -n $staged ]]; then
+  fail=0
+  for f in ${(f)staged}; do
+    content=$(git show ":$f" 2>/dev/null) || continue
+    for p in $patterns; do
+      if print -r -- "$content" | grep -Eq -- "$p"; then
+        echo "Blocked: '$f' matches secret pattern  /$p/"; fail=1
+      fi
+    done
+  done
+  (( fail )) && { echo "\nCommit aborted — secrets belong in your out-of-git env file."; exit 1; }
+fi
+
+# ---------- 2. delegate to the repo's own hook, if any ----------
+repo_hook="$(git rev-parse --git-dir)/hooks/pre-commit"
+if [[ -x $repo_hook ]]; then
+  echo "guard: passed — running repo's own pre-commit hook..."
+  exec "$repo_hook" "$@"     # its exit code becomes ours
+fi
+exit 0

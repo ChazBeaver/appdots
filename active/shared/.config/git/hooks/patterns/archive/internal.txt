@@ -1,0 +1,5 @@
+# Org-specific strings — FILL THIS IN. This is your highest-value custom file,
+# because no off-the-shelf scanner knows your private endpoints. Examples:
+# gateway\.internal\.yourco\.com
+# litellm\.yourco\.net
+# vpn[0-9]*\.yourco\.com

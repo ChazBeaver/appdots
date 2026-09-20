@@ -1,0 +1,5 @@
+# Cloud credentials (AWS secret keys are shape-generic — see generic.txt)
+AKIA[0-9A-Z]{16}
+ASIA[0-9A-Z]{16}
+GOCSPX-[A-Za-z0-9_-]{20,}
+dop_v1_[a-f0-9]{64}

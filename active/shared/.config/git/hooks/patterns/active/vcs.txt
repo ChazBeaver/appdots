@@ -1,0 +1,4 @@
+# Source-host tokens (GitHub classic + fine-grained, GitLab)
+gh[pousr]_[A-Za-z0-9]{36,}
+github_pat_[A-Za-z0-9_]{22,}
+glpat-[A-Za-z0-9_-]{20,}

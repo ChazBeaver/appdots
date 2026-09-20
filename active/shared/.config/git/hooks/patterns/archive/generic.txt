@@ -1,0 +1,3 @@
+# Generic credential assignments. Higher false-positive rate — this is the
+# file you'll most often archive for a noisy repo. Case-sensitive by design.
+(password|passwd|secret|api[_-]?key|access[_-]?token|auth[_-]?token)[[:space:]]*[:=][[:space:]]*['"][^'"]{6,}

@@ -1,0 +1,2 @@
+# Private key material (RSA/EC/OpenSSH/PGP PEM headers)
+-----BEGIN [A-Z ]*PRIVATE KEY-----

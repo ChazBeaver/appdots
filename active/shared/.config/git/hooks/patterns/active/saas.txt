@@ -1,0 +1,6 @@
+# Common SaaS tokens (Slack, Stripe live, SendGrid, npm)
+xox[baprs]-[A-Za-z0-9-]{10,}
+sk_live_[A-Za-z0-9]{16,}
+rk_live_[A-Za-z0-9]{16,}
+SG\.[A-Za-z0-9_-]{16,}\.[A-Za-z0-9_-]{16,}
+npm_[A-Za-z0-9]{36}
