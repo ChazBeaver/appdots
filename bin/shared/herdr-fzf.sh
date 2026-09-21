@@ -2,6 +2,12 @@
 
 set -eu
 
+# Herdr runs popup commands with the server's environment, which can lack the
+# user's shell PATH when the server was started outside a login shell. Add the
+# usual tool locations so herdr, jq, and fzf resolve on Linux and macOS alike.
+PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
+export PATH
+
 # Popups close the moment this script exits, so a failure message would vanish
 # unread. Hold the popup open until a key is pressed when stdin is a terminal.
 hold() {
