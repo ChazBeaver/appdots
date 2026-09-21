@@ -2,8 +2,24 @@
 
 set -eu
 
+# Popups close the moment this script exits, so a failure message would vanish
+# unread. Hold the popup open until a key is pressed when stdin is a terminal.
+hold() {
+  if [ -t 0 ]; then
+    printf '\nPress Enter to close.' >&2
+    read -r _ || true
+  fi
+}
+
+fail() {
+  printf 'herdr-fzf: %s\n' "$1" >&2
+  hold
+  exit 1
+}
+
 usage() {
   printf 'Usage: herdr-fzf <tab|workspace|worktree>\n' >&2
+  hold
   exit 2
 }
 
@@ -15,14 +31,13 @@ esac
 
 for dependency in herdr jq fzf; do
   if ! command -v "$dependency" >/dev/null 2>&1; then
-    printf 'herdr-fzf: required command not found: %s\n' "$dependency" >&2
-    exit 1
+    fail "required command not found: $dependency (PATH=$PATH)"
   fi
 done
 
 case "$mode" in
   tab)
-    snapshot="$(herdr api snapshot)"
+    snapshot="$(herdr api snapshot)" || fail "herdr api snapshot failed"
     rows="$(
       printf '%s\n' "$snapshot" | jq -r '
         .result.snapshot as $snapshot
@@ -44,7 +59,7 @@ case "$mode" in
     header='workspace  tab  status  panes'
     ;;
   workspace)
-    snapshot="$(herdr api snapshot)"
+    snapshot="$(herdr api snapshot)" || fail "herdr api snapshot failed"
     rows="$(
       printf '%s\n' "$snapshot" | jq -r '
         .result.snapshot.workspaces[]
@@ -62,12 +77,11 @@ case "$mode" in
     header='workspace  status  tabs  panes'
     ;;
   worktree)
-    listing="$(herdr worktree list --cwd "$PWD")"
+    # herdr exits nonzero on an API error and prints the JSON error to stderr.
+    listing="$(herdr worktree list --cwd "$PWD" 2>&1 || true)"
+    [ -n "$listing" ] || fail "herdr worktree list produced no output"
     error_message="$(printf '%s\n' "$listing" | jq -r '.error.message // empty')"
-    if [ -n "$error_message" ]; then
-      printf 'herdr-fzf: %s\n' "$error_message" >&2
-      exit 1
-    fi
+    [ -z "$error_message" ] || fail "$error_message"
     rows="$(
       printf '%s\n' "$listing" | jq -r '
         .result.worktrees[]
@@ -86,7 +100,7 @@ case "$mode" in
     ;;
 esac
 
-[ -n "$rows" ] || exit 0
+[ -n "$rows" ] || fail "no ${mode}s found (herdr $(herdr --version 2>&1 | tail -n1))"
 
 tab_character="$(printf '\t')"
 choice="$(
