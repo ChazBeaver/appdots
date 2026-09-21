@@ -52,6 +52,9 @@ close_workspace = "prefix+shift+k"
 previous_workspace = ["prefix+shift+p", "alt+up"]
 next_workspace = ["prefix+shift+n", "alt+down"]
 
+new_worktree = "prefix+shift+t"
+remove_worktree = "prefix+ctrl+t"
+
 [[keys.command]]
 key = "prefix+f"
 type = "popup"
@@ -65,6 +68,14 @@ key = "prefix+shift+f"
 type = "popup"
 command = "herdr-fzf workspace"
 description = "Find workspace"
+width = "80%"
+height = "80%"
+
+[[keys.command]]
+key = "prefix+t"
+type = "popup"
+command = "herdr-fzf worktree"
+description = "Find worktree"
 width = "80%"
 height = "80%"
 
