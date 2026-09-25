@@ -69,10 +69,13 @@ return {
       --
       -- Hooks preview_fn (the method Previewer:preview calls), since
       -- define_preview is already captured in a closure at construction.
-      -- The window id comes from status because self.state.winid is only
-      -- filled in later, asynchronously.
+      -- The window id is taken from status, which is populated up front.
+      --
+      -- Built from the configured grep previewer (vim_buffer_vimgrep), not
+      -- previewers.vimgrep, which is the older terminal previewer and has
+      -- no horizontal scroll or window state.
       local function grep_previewer(opts, pattern)
-        local previewer = require("telescope.previewers").vimgrep.new(opts)
+        local previewer = require("telescope.config").values.grep_previewer(opts)
         local preview_fn = previewer.preview_fn
         previewer.preview_fn = function(self, entry, status)
           preview_fn(self, entry, status)
