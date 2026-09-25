@@ -66,6 +66,58 @@ return {
         })
       end, { desc = "Search word under cursor (deep search)" })
 
+      -- <leader>sr: search a literal string, browse the matches in Telescope,
+      -- then replace it file by file with a y/n/a/q prompt on every match.
+      --
+      -- Both strings are taken literally, so paths like ~/.config/test/path
+      -- or replacements like ~/new/special-path/whatever need no escaping.
+      --
+      -- In the picker:  <CR> replaces in every listed file,
+      --                 <Tab> marks specific results first, then <CR>.
+      -- At each match:  y = replace, n = skip, a = all in this file,
+      --                 q = skip rest of this file, <C-c> = abort everything.
+      vim.keymap.set("n", "<leader>sr", function()
+        local search = vim.fn.input("Replace > ")
+        if search == "" then
+          return
+        end
+
+        local actions = require("telescope.actions")
+
+        require("telescope.builtin").grep_string({
+          prompt_title = "Replace '" .. search .. "'  (<CR> all, <Tab> pick)",
+          search = search,
+          additional_args = function()
+            return { "--hidden", "--no-ignore", "--case-sensitive" }
+          end,
+          attach_mappings = function(prompt_bufnr, _)
+            actions.select_default:replace(function()
+              -- Tab-selected entries if any, otherwise every listed result.
+              actions.smart_send_to_qflist(prompt_bufnr)
+
+              if vim.tbl_isempty(vim.fn.getqflist()) then
+                vim.notify("No matches to replace", vim.log.levels.WARN)
+                return
+              end
+
+              local replacement = vim.fn.input("Replace '" .. search .. "' with > ")
+              if replacement == "" then
+                vim.notify("Replace cancelled", vim.log.levels.INFO)
+                return
+              end
+
+              -- \V = very nomagic (only \ is special), \C = match case,
+              -- which mirrors the --fixed-strings --case-sensitive rg search.
+              local pattern = [[\V\C]] .. vim.fn.escape(search, [[\/]])
+              local subst = vim.fn.escape(replacement, [[\/&~]])
+
+              vim.cmd("cfdo %s/" .. pattern .. "/" .. subst .. "/gce | update")
+            end)
+            return true
+          end,
+        })
+      end, { desc = "Search literal string and replace with confirmation" })
+
       vim.keymap.set("n", "<leader>sg", function()
         local git_root = vim.fn.systemlist("git rev-parse --show-toplevel")[1]
         if not git_root or git_root == "" then
