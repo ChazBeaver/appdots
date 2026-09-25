@@ -76,6 +76,10 @@ return {
       --                 <Tab> marks specific results first, then <CR>.
       -- At each match:  y = replace, n = skip, a = all in this file,
       --                 q = skip rest of this file, <C-c> = abort everything.
+      --
+      -- Files are visited in a Lua loop instead of :cfdo so that no
+      -- "(1 of N)", "N substitutions" or "written" messages pile up and
+      -- force a "Press ENTER" prompt between files.
       vim.keymap.set("n", "<leader>sr", function()
         local search = vim.fn.input("Replace > ")
         if search == "" then
@@ -95,7 +99,16 @@ return {
               -- Tab-selected entries if any, otherwise every listed result.
               actions.smart_send_to_qflist(prompt_bufnr)
 
-              if vim.tbl_isempty(vim.fn.getqflist()) then
+              -- Unique files, in result order.
+              local files, seen = {}, {}
+              for _, item in ipairs(vim.fn.getqflist()) do
+                local name = vim.fn.bufname(item.bufnr)
+                if name ~= "" and not seen[name] then
+                  seen[name] = true
+                  table.insert(files, name)
+                end
+              end
+              if vim.tbl_isempty(files) then
                 vim.notify("No matches to replace", vim.log.levels.WARN)
                 return
               end
@@ -106,12 +119,44 @@ return {
                 return
               end
 
+              -- Pick a delimiter that appears in neither string so the
+              -- prompt shows the replacement without escaped slashes.
+              local delim = "/"
+              for d in ("/#@!,;"):gmatch(".") do
+                if not search:find(d, 1, true) and not replacement:find(d, 1, true) then
+                  delim = d
+                  break
+                end
+              end
+
               -- \V = very nomagic (only \ is special), \C = match case,
               -- which mirrors the --fixed-strings --case-sensitive rg search.
-              local pattern = [[\V\C]] .. vim.fn.escape(search, [[\/]])
-              local subst = vim.fn.escape(replacement, [[\/&~]])
+              local pattern = [[\V\C]] .. vim.fn.escape(search, "\\" .. delim)
+              local subst = vim.fn.escape(replacement, "\\&~" .. delim)
+              local cmd = "%s" .. delim .. pattern .. delim .. subst .. delim .. "gce"
 
-              vim.cmd("cfdo %s/" .. pattern .. "/" .. subst .. "/gce | update")
+              -- Silence "N substitutions on M lines" so nothing but the
+              -- confirm prompt reaches the command line.
+              local report = vim.o.report
+              vim.o.report = 2147483647
+              local ok, err = pcall(function()
+                for _, file in ipairs(files) do
+                  vim.cmd("silent edit " .. vim.fn.fnameescape(file))
+                  vim.cmd(cmd)
+                  vim.cmd("silent update")
+                end
+              end)
+              vim.o.report = report
+
+              if not ok then
+                if tostring(err):find("Keyboard interrupt", 1, true) then
+                  vim.notify("Replace aborted; current buffer left unsaved", vim.log.levels.WARN)
+                else
+                  vim.notify(tostring(err), vim.log.levels.ERROR)
+                end
+                return
+              end
+              vim.notify("Replace finished in " .. #files .. " file(s)", vim.log.levels.INFO)
             end)
             return true
           end,
