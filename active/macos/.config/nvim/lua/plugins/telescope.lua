@@ -9,13 +9,16 @@ return {
       local builtin = require("telescope.builtin")
 
       -- =========================
-      -- Selection highlight
+      -- Selection / preview highlights
       -- =========================
-      -- The themes' TelescopeSelection bar is too dark to spot. Rebuild it
-      -- from the active theme on every colorscheme change: take the bar's
-      -- own background (falling back to Visual, then Normal) and push it
-      -- a step toward white on dark themes, or toward black on light ones.
-      local function brighten_telescope_selection()
+      -- The themes' TelescopeSelection bar and the TelescopePreviewLine
+      -- (the matched line in the grep preview) are too dark to spot.
+      -- Rebuild both from the active theme on every colorscheme change:
+      -- take the bar's own background (falling back to Visual, then Normal)
+      -- and push it toward white on dark themes, or toward black on light
+      -- ones. TelescopePreviewMatch (the search text inside the preview)
+      -- gets a stronger step plus bold and underline.
+      local function brighten_telescope_highlights()
         local function bg_of(group)
           local ok, hl = pcall(vim.api.nvim_get_hl, 0, { name = group, link = false })
           if ok and hl and hl.bg then
@@ -29,34 +32,72 @@ return {
           return
         end
 
-        local r = math.floor(base / 65536) % 256
-        local g = math.floor(base / 256) % 256
-        local b = base % 256
-
         -- Perceived luminance of the editor background decides the direction.
         local normal = bg_of("Normal") or base
         local nr = math.floor(normal / 65536) % 256
         local ng = math.floor(normal / 256) % 256
         local nb = normal % 256
-        local light_theme = (0.299 * nr + 0.587 * ng + 0.114 * nb) > 128
+        local target = (0.299 * nr + 0.587 * ng + 0.114 * nb) > 128 and 0 or 255
 
-        local amount = 0.18
-        local target = light_theme and 0 or 255
-        r = math.floor(r + (target - r) * amount + 0.5)
-        g = math.floor(g + (target - g) * amount + 0.5)
-        b = math.floor(b + (target - b) * amount + 0.5)
+        local function shift(amount)
+          local r = math.floor(base / 65536) % 256
+          local g = math.floor(base / 256) % 256
+          local b = base % 256
+          r = math.floor(r + (target - r) * amount + 0.5)
+          g = math.floor(g + (target - g) * amount + 0.5)
+          b = math.floor(b + (target - b) * amount + 0.5)
+          return string.format("#%02x%02x%02x", r, g, b)
+        end
 
-        vim.api.nvim_set_hl(0, "TelescopeSelection", {
-          bg = string.format("#%02x%02x%02x", r, g, b),
-          bold = true,
-        })
+        local line_bg = shift(0.18)
+        vim.api.nvim_set_hl(0, "TelescopeSelection", { bg = line_bg, bold = true })
+        vim.api.nvim_set_hl(0, "TelescopePreviewLine", { bg = line_bg, bold = true })
+        vim.api.nvim_set_hl(0, "TelescopePreviewMatch", { bg = shift(0.45), bold = true, underline = true })
       end
 
       vim.api.nvim_create_autocmd("ColorScheme", {
-        group = vim.api.nvim_create_augroup("TelescopeSelectionBrighten", { clear = true }),
-        callback = brighten_telescope_selection,
+        group = vim.api.nvim_create_augroup("TelescopeHighlightBrighten", { clear = true }),
+        callback = brighten_telescope_highlights,
       })
-      brighten_telescope_selection()
+      brighten_telescope_highlights()
+
+      -- grep_string with the literal search text marked in the preview.
+      -- Telescope only highlights the whole matched line; this adds a
+      -- window match on the search string so the exact hit stands out.
+      -- Case-sensitivity mirrors rg: smart-case unless opts.case_sensitive.
+      local function grep_string_marked(opts)
+        opts = opts or {}
+        local search = opts.search or vim.fn.expand("<cword>")
+        if search == "" then
+          return
+        end
+        opts.search = search
+
+        local case = (opts.case_sensitive or search:find("%u")) and [[\C]] or [[\c]]
+        local pattern = [[\V]] .. case .. vim.fn.escape(search, "\\")
+
+        -- Hook preview_fn (the method Previewer:preview calls), since
+        -- define_preview is already captured in a closure at construction.
+        local previewer = require("telescope.previewers").vimgrep.new(opts)
+        local preview_fn = previewer.preview_fn
+        previewer.preview_fn = function(self, entry, status)
+          preview_fn(self, entry, status)
+          -- self.state.winid is only filled in later (async), so take the
+          -- window from status, which is populated up front.
+          local win = status.preview_win
+            or (status.layout and status.layout.preview and status.layout.preview.winid)
+          vim.schedule(function()
+            if win and vim.api.nvim_win_is_valid(win) then
+              -- Fixed id so re-adding on every entry is a no-op instead of a pile-up.
+              pcall(vim.fn.matchadd, "TelescopePreviewMatch", pattern, 20, 4242, { window = win })
+            end
+          end)
+        end
+        opts.previewer = previewer
+
+        require("telescope.builtin").grep_string(opts)
+      end
+
 
       -- =========================
       -- Files / navigation
@@ -100,7 +141,7 @@ return {
       end, { desc = "Deep search (includes hidden)" })
 
       vim.keymap.set("n", "<leader>ss", function()
-        require("telescope.builtin").grep_string({
+        grep_string_marked({
           search = vim.fn.input("Grep > "),
           additional_args = function()
             return { "--hidden", "--no-ignore" }
@@ -109,7 +150,7 @@ return {
       end, { desc = "Search for input string (deep search)" })
 
       vim.keymap.set("n", "<leader>sw", function()
-        require("telescope.builtin").grep_string({
+        grep_string_marked({
           additional_args = function()
             return { "--hidden", "--no-ignore" }
           end,
@@ -138,9 +179,10 @@ return {
 
         local actions = require("telescope.actions")
 
-        require("telescope.builtin").grep_string({
+        grep_string_marked({
           prompt_title = "Replace '" .. search .. "'  (<CR> all, <Tab> pick)",
           search = search,
+          case_sensitive = true,
           additional_args = function()
             return { "--hidden", "--no-ignore", "--case-sensitive" }
           end,
