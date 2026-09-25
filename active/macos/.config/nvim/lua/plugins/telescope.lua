@@ -9,6 +9,56 @@ return {
       local builtin = require("telescope.builtin")
 
       -- =========================
+      -- Selection highlight
+      -- =========================
+      -- The themes' TelescopeSelection bar is too dark to spot. Rebuild it
+      -- from the active theme on every colorscheme change: take the bar's
+      -- own background (falling back to Visual, then Normal) and push it
+      -- a step toward white on dark themes, or toward black on light ones.
+      local function brighten_telescope_selection()
+        local function bg_of(group)
+          local ok, hl = pcall(vim.api.nvim_get_hl, 0, { name = group, link = false })
+          if ok and hl and hl.bg then
+            return hl.bg
+          end
+          return nil
+        end
+
+        local base = bg_of("TelescopeSelection") or bg_of("Visual") or bg_of("Normal")
+        if not base then
+          return
+        end
+
+        local r = math.floor(base / 65536) % 256
+        local g = math.floor(base / 256) % 256
+        local b = base % 256
+
+        -- Perceived luminance of the editor background decides the direction.
+        local normal = bg_of("Normal") or base
+        local nr = math.floor(normal / 65536) % 256
+        local ng = math.floor(normal / 256) % 256
+        local nb = normal % 256
+        local light_theme = (0.299 * nr + 0.587 * ng + 0.114 * nb) > 128
+
+        local amount = 0.18
+        local target = light_theme and 0 or 255
+        r = math.floor(r + (target - r) * amount + 0.5)
+        g = math.floor(g + (target - g) * amount + 0.5)
+        b = math.floor(b + (target - b) * amount + 0.5)
+
+        vim.api.nvim_set_hl(0, "TelescopeSelection", {
+          bg = string.format("#%02x%02x%02x", r, g, b),
+          bold = true,
+        })
+      end
+
+      vim.api.nvim_create_autocmd("ColorScheme", {
+        group = vim.api.nvim_create_augroup("TelescopeSelectionBrighten", { clear = true }),
+        callback = brighten_telescope_selection,
+      })
+      brighten_telescope_selection()
+
+      -- =========================
       -- Files / navigation
       -- =========================
       vim.keymap.set("n", "<leader>ff", function()
