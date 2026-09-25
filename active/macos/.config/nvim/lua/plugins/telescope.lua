@@ -11,70 +11,34 @@ return {
       -- =========================
       -- Selection / preview highlights
       -- =========================
-      -- The themes' TelescopeSelection bar and the TelescopePreviewLine
-      -- (the matched line in the grep preview) are too dark to spot.
-      -- Rebuild both from the active theme on every colorscheme change:
-      -- take the bar's own background (falling back to Visual, then Normal)
-      -- and push it toward white on dark themes, or toward black on light
-      -- ones. TelescopePreviewMatch (the search text inside the preview)
-      -- gets a stronger step plus bold and underline.
-      local function brighten_telescope_highlights()
-        local function bg_of(group)
-          local ok, hl = pcall(vim.api.nvim_get_hl, 0, { name = group, link = false })
-          if ok and hl and hl.bg then
-            return hl.bg
-          end
-          return nil
-        end
-
-        local base = bg_of("TelescopeSelection") or bg_of("Visual") or bg_of("Normal")
-        if not base then
-          return
-        end
-
-        -- Perceived luminance of the editor background decides the direction.
-        local normal = bg_of("Normal") or base
-        local nr = math.floor(normal / 65536) % 256
-        local ng = math.floor(normal / 256) % 256
-        local nb = normal % 256
-        local target = (0.299 * nr + 0.587 * ng + 0.114 * nb) > 128 and 0 or 255
-
-        local function shift(amount)
-          local r = math.floor(base / 65536) % 256
-          local g = math.floor(base / 256) % 256
-          local b = base % 256
-          r = math.floor(r + (target - r) * amount + 0.5)
-          g = math.floor(g + (target - g) * amount + 0.5)
-          b = math.floor(b + (target - b) * amount + 0.5)
-          return string.format("#%02x%02x%02x", r, g, b)
-        end
-
-        local line_bg = shift(0.18)
-        vim.api.nvim_set_hl(0, "TelescopeSelection", { bg = line_bg, bold = true })
-        vim.api.nvim_set_hl(0, "TelescopePreviewLine", { bg = line_bg, bold = true })
-        vim.api.nvim_set_hl(0, "TelescopePreviewMatch", { bg = shift(0.45), bold = true, underline = true })
+      -- The afternoon theme's TelescopeSelection (#1D2124) and
+      -- TelescopePreviewLine (#171A1D) are too close to the panel
+      -- background (#0D0F11) to spot. Lift both to the palette's bg_3 and
+      -- mark the search text in the preview with the theme's gold.
+      -- Re-applied on ColorScheme because loading a theme resets highlights.
+      local function set_telescope_highlights()
+        vim.api.nvim_set_hl(0, "TelescopeSelection", { bg = "#32363A", bold = true })
+        vim.api.nvim_set_hl(0, "TelescopePreviewLine", { bg = "#32363A", bold = true })
+        vim.api.nvim_set_hl(0, "TelescopePreviewMatch", { fg = "#C89A56", bold = true, underline = true })
       end
 
       vim.api.nvim_create_autocmd("ColorScheme", {
-        group = vim.api.nvim_create_augroup("TelescopeHighlightBrighten", { clear = true }),
-        callback = brighten_telescope_highlights,
+        group = vim.api.nvim_create_augroup("TelescopeHighlights", { clear = true }),
+        callback = set_telescope_highlights,
       })
-      brighten_telescope_highlights()
+      set_telescope_highlights()
 
-      -- Grep previewer that wraps long lines and, when given a pattern,
-      -- marks the search text. Telescope forces nowrap on the preview
-      -- window and only highlights the whole matched line, so long lines
-      -- get cut at the pane edge and the hit itself is not visible.
-      -- Horizontal scroll stays available with <C-f> (left) / <C-k> (right).
-      --
-      -- Hooks preview_fn (the method Previewer:preview calls), since
-      -- define_preview is already captured in a closure at construction.
-      -- The window id is taken from status, which is populated up front.
+      -- Grep previewer that marks the search text. Telescope only
+      -- highlights the whole matched line, so the hit itself is not
+      -- visible on long lines. Scroll the preview with <C-f> (left),
+      -- <C-k> (right), <C-u> (up) and <C-d> (down).
       --
       -- Built from the configured grep previewer (vim_buffer_vimgrep), not
       -- previewers.vimgrep, which is the older terminal previewer and has
-      -- no horizontal scroll or window state.
-      local function grep_previewer(opts, pattern)
+      -- no horizontal scroll or window state. Hooks preview_fn (the method
+      -- Previewer:preview calls), since define_preview is already captured
+      -- in a closure at construction. The window id is taken from status.
+      local function marked_grep_previewer(opts, pattern)
         local previewer = require("telescope.config").values.grep_previewer(opts)
         local preview_fn = previewer.preview_fn
         previewer.preview_fn = function(self, entry, status)
@@ -82,12 +46,7 @@ return {
           local win = status.preview_win
             or (status.layout and status.layout.preview and status.layout.preview.winid)
           vim.schedule(function()
-            if not (win and vim.api.nvim_win_is_valid(win)) then
-              return
-            end
-            vim.wo[win].wrap = true
-            vim.wo[win].linebreak = true
-            if pattern then
+            if win and vim.api.nvim_win_is_valid(win) then
               -- Fixed id so re-adding on every entry is a no-op instead of a pile-up.
               pcall(vim.fn.matchadd, "TelescopePreviewMatch", pattern, 20, 4242, { window = win })
             end
@@ -108,17 +67,9 @@ return {
 
         local case = (opts.case_sensitive or search:find("%u")) and [[\C]] or [[\c]]
         local pattern = [[\V]] .. case .. vim.fn.escape(search, "\\")
-        opts.previewer = grep_previewer(opts, pattern)
+        opts.previewer = marked_grep_previewer(opts, pattern)
 
         require("telescope.builtin").grep_string(opts)
-      end
-
-      -- live_grep with the wrapping previewer (the search text changes as
-      -- you type, so nothing is marked beyond Telescope's own line).
-      local function live_grep_wrapped(opts)
-        opts = opts or {}
-        opts.previewer = grep_previewer(opts)
-        require("telescope.builtin").live_grep(opts)
       end
 
 
@@ -156,7 +107,7 @@ return {
       -- Search
       -- =========================
       vim.keymap.set("n", "<leader>sl", function()
-        live_grep_wrapped({
+        builtin.live_grep({
           additional_args = function()
             return { "--hidden", "--no-ignore" }
           end,
@@ -285,7 +236,7 @@ return {
           return
         end
 
-        live_grep_wrapped({
+        require("telescope.builtin").live_grep({
           additional_args = function()
             return { "--hidden" }
           end,
