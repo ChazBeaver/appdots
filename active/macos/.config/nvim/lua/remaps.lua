@@ -1,18 +1,16 @@
 -- REMAPS FILE --
--- I don't think these need to be defined again, but it won't hurt
-local global = vim.g
-local o = vim.o
-vim.scriptencoding = "utf-8"
+-- <leader> is set in init.lua before lazy loads; do not set it again here.
 
 -- ############################################################################
 --                              Main Keymaps
 -- ############################################################################
- 
--- IMPORTANT KEYMAPS
 
--- Map <leader>
-vim.g.mapleader = " " -- Make sure to set `mapleader` before lazy so your mappings are correct
- 
+-- Window navigation
+vim.keymap.set("n", "<C-h>", "<C-w>h", { desc = "Focus window left" })
+vim.keymap.set("n", "<C-j>", "<C-w>j", { desc = "Focus window below" })
+vim.keymap.set("n", "<C-k>", "<C-w>k", { desc = "Focus window above" })
+vim.keymap.set("n", "<C-l>", "<C-w>l", { desc = "Focus window right" })
+
 -- Return Current File Directory
 vim.keymap.set("n", "<leader>e", vim.cmd.Ex,
   { desc = "Return to File Directory" })
@@ -29,12 +27,37 @@ vim.keymap.set("n", "<leader>EH", [[:Explore ~/.<CR>]],
 -- PATH HELPERS
 -- ============================================================
 
+-- The file a <leader>yf* map is about: the node under the cursor in
+-- Neo-tree, the entry under the cursor in netrw, otherwise the buffer's
+-- own file. Returns "" when there is nothing to point at.
 local function get_absolute_path()
-  return vim.fn.expand("%:p")
+  local path = ""
+  if vim.bo.filetype == "neo-tree" then
+    local ok, manager = pcall(require, "neo-tree.sources.manager")
+    local state = ok and manager.get_state_for_window() or nil
+    local node = state and state.tree and state.tree:get_node() or nil
+    path = node and node.path or ""
+  elseif vim.bo.filetype == "netrw" then
+    local dir = vim.b.netrw_curdir
+    local ok, name = pcall(vim.fn["netrw#Call"], "NetrwGetWord")
+    if dir and ok and type(name) == "string" and name ~= "" then
+      path = dir .. "/" .. name
+    end
+  else
+    path = vim.fn.expand("%:p")
+  end
+  if path == "" then
+    return ""
+  end
+  return (vim.fn.fnamemodify(path, ":p"):gsub("/$", ""))
 end
 
 local function get_file_dir()
-  return vim.fn.expand("%:p:h")
+  local path = get_absolute_path()
+  if path == "" then
+    return ""
+  end
+  return vim.fn.fnamemodify(path, ":h")
 end
 
 local function get_repo_root()
@@ -55,12 +78,12 @@ local function get_repo_root()
 end
 
 local function get_repo_relative_path()
-  local filepath = vim.fn.fnamemodify(get_absolute_path(), ":p"):gsub("/$", "")
+  local filepath = get_absolute_path()
   local repo_root = get_repo_root()
 
   -- fallback if not in a git repo
   if not repo_root then
-    return vim.fn.expand("%")
+    return filepath
   end
 
   -- repo name, e.g. "theme-engine"
@@ -78,7 +101,7 @@ local function get_repo_relative_path()
   end
 
   -- fallback
-  return vim.fn.expand("%")
+  return filepath
 end
 
 local function get_repo_relative_dir()
@@ -100,42 +123,39 @@ end
 -- KEYMAPS
 -- ============================================================
 
+local function yank_path(label, value)
+  if get_absolute_path() == "" then
+    vim.notify("No file under cursor to copy", vim.log.levels.WARN)
+    return
+  end
+  vim.fn.setreg("+", value)
+  vim.notify("📋 Copied " .. label .. ": " .. value, vim.log.levels.INFO)
+end
+
 -- <leader>yfp → repo-relative file path
 vim.keymap.set("n", "<leader>yfp", function()
-  local path = get_repo_relative_path()
-  vim.fn.setreg("+", path)
-  print("📋 Copied repo path: " .. path)
+  yank_path("repo path", get_repo_relative_path())
 end, { desc = "Copy repo-relative file path" })
 
 -- <leader>yfP → full absolute file path
 vim.keymap.set("n", "<leader>yfP", function()
-  local path = get_absolute_path()
-  vim.fn.setreg("+", path)
-  print("📋 Copied full path: " .. path)
+  yank_path("full path", get_absolute_path())
 end, { desc = "Copy full file path" })
 
--- <leader>yfl → repo/path/file:line
+-- <leader>yfl → repo/path/file:line (in an explorer the line is the
+-- cursor row, so this only makes sense inside a file)
 vim.keymap.set("n", "<leader>yfl", function()
-  local path = get_repo_relative_path()
-  local line = vim.fn.line(".")
-  local result = path .. ":" .. line
-
-  vim.fn.setreg("+", result)
-  print("📋 Copied: " .. result)
+  yank_path("path:line", get_repo_relative_path() .. ":" .. vim.fn.line("."))
 end, { desc = "Copy repo file path with line number" })
 
 -- <leader>yfn → filename only
 vim.keymap.set("n", "<leader>yfn", function()
-  local name = vim.fn.expand("%:t")
-  vim.fn.setreg("+", name)
-  print("📋 Copied: " .. name)
+  yank_path("file name", vim.fn.fnamemodify(get_absolute_path(), ":t"))
 end, { desc = "Copy file name" })
 
 -- <leader>yfd → repo-relative directory
 vim.keymap.set("n", "<leader>yfd", function()
-  local dir = get_repo_relative_dir()
-  vim.fn.setreg("+", dir)
-  print("📋 Copied dir: " .. dir)
+  yank_path("dir", get_repo_relative_dir())
 end, { desc = "Copy repo-relative directory path" })
  
 -- ############################################################################
@@ -189,15 +209,10 @@ vim.keymap.set("n", "<leader>cd", CopyCurrentDate, { desc = "Copy current date (
 vim.keymap.set("n", "n", "nzzzv")
 vim.keymap.set("n", "N", "Nzzzv")
  
--- Switch back to the previous buffer you were just on (without using Harpoon)
+-- Switch back to the previous buffer you were just on
 vim.keymap.set("n", "<leader><Tab>", "<C-^>",
 { desc = "Switch to previous buffer" })
  
--- Source ~/.zshrc file 
-vim.keymap.set("n", "<leader>fz", function()
-  vim.cmd("!source ~/.zshrc")
-end, { desc = "Source ~/.zshrc", silent = true })
-
 -- Make file exacutable
 vim.api.nvim_create_autocmd("FileType", {
   pattern = "netrw",
@@ -220,30 +235,6 @@ vim.api.nvim_create_autocmd("FileType", {
   end,
 })
 
--- -- Show highlight group type under cursor
--- vim.keymap.set("n", "<leader>pt", function()
---   vim.cmd('echo synIDattr(synID(line("."), col("."), 1), "name")')
--- end, { desc = "Show highlight group type under cursor" })
-
--- Show highlight group type under cursor
-vim.keymap.set("n", "<leader>pt", function()
-  local line = vim.fn.line(".")
-  local col = vim.fn.col(".")
-  local id = vim.fn.synID(line, col, 1)
-  local trans_id = vim.fn.synIDtrans(id)
-
-  local name     = vim.fn.synIDattr(id, "name")
-  local trans    = vim.fn.synIDattr(trans_id, "name")
-  local hl       = vim.fn.synIDattr(trans_id, "fg#")
-
-  if name == "" then
-    vim.notify("No syntax group found under cursor.", vim.log.levels.WARN)
-    return
-  end
-
-  vim.notify("Group: " .. name .. "\nTrans: " .. trans .. "\nFG: " .. hl, vim.log.levels.INFO)
-end, { desc = "Show highlight group under cursor" })
-
 
 -- ############################################################################
 --                         Begin of markdown section
@@ -254,13 +245,49 @@ end, { desc = "Show highlight group under cursor" })
 --                         Begin of github section
 -- ############################################################################
 
--- Escape VimDiff when in VimDiff by using <Esc>
-vim.keymap.set("n", "<Esc>", function()
-  if vim.wo.diff then
-    vim.cmd("diffoff")
-    vim.cmd("only")
+-- q (or <Esc>) closes a diff opened by gitsigns diffthis or `nvim -d`, like
+-- q closes Neogit buffers and the floating previews. The maps are
+-- buffer-local and exist only while the buffer is shown in diff mode, so
+-- q still records macros everywhere else. Diffview manages its own tab and
+-- keys, so its diff windows are left alone.
+local function in_diffview()
+  if vim.t.diffview_view_initialized then
+    return true
   end
-end, { desc = "Exit diff mode cleanly" })
+  for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+    if vim.startswith(vim.api.nvim_buf_get_name(vim.api.nvim_win_get_buf(win)), "diffview://") then
+      return true
+    end
+  end
+  return false
+end
+
+local function close_diff()
+  for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+    if vim.wo[win].diff then
+      local buf = vim.api.nvim_win_get_buf(win)
+      local scratch = vim.bo[buf].buftype ~= ""
+        or vim.startswith(vim.api.nvim_buf_get_name(buf), "gitsigns://")
+      if scratch and #vim.api.nvim_tabpage_list_wins(0) > 1 then
+        vim.api.nvim_win_close(win, true)
+      end
+    end
+  end
+  vim.cmd("diffoff!")
+end
+
+vim.api.nvim_create_autocmd("OptionSet", {
+  pattern = "diff",
+  callback = function()
+    if vim.wo.diff and not in_diffview() then
+      vim.keymap.set("n", "q", close_diff, { buffer = true, nowait = true, desc = "Close diff" })
+      vim.keymap.set("n", "<Esc>", close_diff, { buffer = true, nowait = true, desc = "Close diff" })
+    else
+      pcall(vim.keymap.del, "n", "q", { buffer = true })
+      pcall(vim.keymap.del, "n", "<Esc>", { buffer = true })
+    end
+  end,
+})
 
 
 -- -- Function to get the GitHub URL of the current file

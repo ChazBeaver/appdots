@@ -87,11 +87,11 @@ return {
       gs.diffthis(target)
     end
 
-    map("n", "<leader>ghn", gs_call("next_hunk"), vim.tbl_extend("force", opts, {
+    map("n", "]h", gs_call("nav_hunk", "next"), vim.tbl_extend("force", opts, {
       desc = "Git next hunk",
     }))
 
-    map("n", "<leader>ghN", gs_call("prev_hunk"), vim.tbl_extend("force", opts, {
+    map("n", "[h", gs_call("nav_hunk", "prev"), vim.tbl_extend("force", opts, {
       desc = "Git previous hunk",
     }))
 

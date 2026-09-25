@@ -39,6 +39,10 @@ adjust-cursor-thickness = 50%
 # Shell integration (remove no-cursor while testing cursor behavior)
 shell-integration-features = ssh-env
 
+# macOS only: left Option sends Alt so Alt+hjkl reach Neovim (Telescope
+# preview scrolling); right Option still types symbols. Ignored on Linux.
+macos-option-as-alt = left
+
 # Keyboard bindings
 keybind = shift+insert=paste_from_clipboard
 keybind = control+insert=copy_to_clipboard

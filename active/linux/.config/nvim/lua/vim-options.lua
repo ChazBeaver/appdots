@@ -3,12 +3,6 @@ local o = vim.o
  
 vim.scriptencoding = "utf-8"
  
--- Map <leader>
-vim.g.mapleader = " " -- Make sure to set `mapleader` before lazy so your mappings are correct
---  
--- -- Return Keymap
--- vim.keymap.set("n", "<leader>pv", vim.cmd.Ex)
- 
 -- Editor Options
 o.number = true
 o.relativenumber = false
@@ -42,7 +36,3 @@ o.showmatch = true
 -- vim.cmd("set softtabstop=0")
 -- vim.cmd("set autoindent")
 -- vim.cmd("set smarttab")
-
--- NOTE the following two conflict with Harpoon2
--- vim.keymap.set('n', '<C-h>', '<C-w>h', {})
--- vim.keymap.set('n', '<C-l>', '<C-w>l',{})
