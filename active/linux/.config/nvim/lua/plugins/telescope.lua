@@ -8,6 +8,31 @@ return {
     config = function()
       local builtin = require("telescope.builtin")
 
+      -- The "deep" pickers pass --hidden --no-ignore, so keep .git internals
+      -- out of every result list and stop rg from walking them at all.
+      require("telescope").setup({
+        defaults = {
+          file_ignore_patterns = { "^%.git/", "/%.git/" },
+          -- Scroll the preview with Alt + vim motions (replaces the
+          -- default <C-f>/<C-k> left/right and <C-u>/<C-d> up/down).
+          mappings = {
+            i = {
+              ["<M-h>"] = "preview_scrolling_left",
+              ["<M-j>"] = "preview_scrolling_down",
+              ["<M-k>"] = "preview_scrolling_up",
+              ["<M-l>"] = "preview_scrolling_right",
+            },
+            n = {
+              ["<M-h>"] = "preview_scrolling_left",
+              ["<M-j>"] = "preview_scrolling_down",
+              ["<M-k>"] = "preview_scrolling_up",
+              ["<M-l>"] = "preview_scrolling_right",
+            },
+          },
+        },
+      })
+      local deep_args = { "--hidden", "--no-ignore", "--glob", "!.git/" }
+
       -- =========================
       -- Files / navigation
       -- =========================
@@ -44,7 +69,7 @@ return {
       vim.keymap.set("n", "<leader>sl", function()
         builtin.live_grep({
           additional_args = function()
-            return { "--hidden", "--no-ignore" }
+            return deep_args
           end,
         })
       end, { desc = "Deep search (includes hidden)" })
@@ -53,7 +78,7 @@ return {
         require("telescope.builtin").grep_string({
           search = vim.fn.input("Grep > "),
           additional_args = function()
-            return { "--hidden", "--no-ignore" }
+            return deep_args
           end,
         })
       end, { desc = "Search for input string (deep search)" })
@@ -61,7 +86,7 @@ return {
       vim.keymap.set("n", "<leader>sw", function()
         require("telescope.builtin").grep_string({
           additional_args = function()
-            return { "--hidden", "--no-ignore" }
+            return deep_args
           end,
         })
       end, { desc = "Search word under cursor (deep search)" })
@@ -92,7 +117,7 @@ return {
           prompt_title = "Replace '" .. search .. "'  (<CR> all, <Tab> pick)",
           search = search,
           additional_args = function()
-            return { "--hidden", "--no-ignore", "--case-sensitive" }
+            return vim.list_extend({ "--case-sensitive" }, deep_args)
           end,
           attach_mappings = function(prompt_bufnr, _)
             actions.select_default:replace(function()

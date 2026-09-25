@@ -8,6 +8,31 @@ return {
     config = function()
       local builtin = require("telescope.builtin")
 
+      -- Scroll the preview with Alt + vim motions (replaces the default
+      -- <C-f>/<C-k> left/right and <C-u>/<C-d> up/down). Needs Ghostty's
+      -- macos-option-as-alt so Option sends Alt instead of a symbol.
+      require("telescope").setup({
+        defaults = {
+          -- The "deep" pickers pass --hidden --no-ignore, so keep .git
+          -- internals out of every result list.
+          file_ignore_patterns = { "^%.git/", "/%.git/" },
+          mappings = {
+            i = {
+              ["<M-h>"] = "preview_scrolling_left",
+              ["<M-j>"] = "preview_scrolling_down",
+              ["<M-k>"] = "preview_scrolling_up",
+              ["<M-l>"] = "preview_scrolling_right",
+            },
+            n = {
+              ["<M-h>"] = "preview_scrolling_left",
+              ["<M-j>"] = "preview_scrolling_down",
+              ["<M-k>"] = "preview_scrolling_up",
+              ["<M-l>"] = "preview_scrolling_right",
+            },
+          },
+        },
+      })
+
       -- =========================
       -- Selection / preview highlights
       -- =========================
@@ -57,6 +82,9 @@ return {
 
       -- grep_string with the literal search text marked in the preview.
       -- Case-sensitivity mirrors rg: smart-case unless opts.case_sensitive.
+      -- Shared by the deep pickers; the glob stops rg walking .git at all.
+      local deep_args = { "--hidden", "--no-ignore", "--glob", "!.git/" }
+
       local function grep_string_marked(opts)
         opts = opts or {}
         local search = opts.search or vim.fn.expand("<cword>")
@@ -109,7 +137,7 @@ return {
       vim.keymap.set("n", "<leader>sl", function()
         builtin.live_grep({
           additional_args = function()
-            return { "--hidden", "--no-ignore" }
+            return deep_args
           end,
         })
       end, { desc = "Deep search (includes hidden)" })
@@ -118,7 +146,7 @@ return {
         grep_string_marked({
           search = vim.fn.input("Grep > "),
           additional_args = function()
-            return { "--hidden", "--no-ignore" }
+            return deep_args
           end,
         })
       end, { desc = "Search for input string (deep search)" })
@@ -126,7 +154,7 @@ return {
       vim.keymap.set("n", "<leader>sw", function()
         grep_string_marked({
           additional_args = function()
-            return { "--hidden", "--no-ignore" }
+            return deep_args
           end,
         })
       end, { desc = "Search word under cursor (deep search)" })
@@ -158,7 +186,7 @@ return {
           search = search,
           case_sensitive = true,
           additional_args = function()
-            return { "--hidden", "--no-ignore", "--case-sensitive" }
+            return vim.list_extend({ "--case-sensitive" }, deep_args)
           end,
           attach_mappings = function(prompt_bufnr, _)
             actions.select_default:replace(function()
