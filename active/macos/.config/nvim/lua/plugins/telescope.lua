@@ -61,9 +61,39 @@ return {
       })
       brighten_telescope_highlights()
 
+      -- Grep previewer that wraps long lines and, when given a pattern,
+      -- marks the search text. Telescope forces nowrap on the preview
+      -- window and only highlights the whole matched line, so long lines
+      -- get cut at the pane edge and the hit itself is not visible.
+      -- Horizontal scroll stays available with <C-f> (left) / <C-k> (right).
+      --
+      -- Hooks preview_fn (the method Previewer:preview calls), since
+      -- define_preview is already captured in a closure at construction.
+      -- The window id comes from status because self.state.winid is only
+      -- filled in later, asynchronously.
+      local function grep_previewer(opts, pattern)
+        local previewer = require("telescope.previewers").vimgrep.new(opts)
+        local preview_fn = previewer.preview_fn
+        previewer.preview_fn = function(self, entry, status)
+          preview_fn(self, entry, status)
+          local win = status.preview_win
+            or (status.layout and status.layout.preview and status.layout.preview.winid)
+          vim.schedule(function()
+            if not (win and vim.api.nvim_win_is_valid(win)) then
+              return
+            end
+            vim.wo[win].wrap = true
+            vim.wo[win].linebreak = true
+            if pattern then
+              -- Fixed id so re-adding on every entry is a no-op instead of a pile-up.
+              pcall(vim.fn.matchadd, "TelescopePreviewMatch", pattern, 20, 4242, { window = win })
+            end
+          end)
+        end
+        return previewer
+      end
+
       -- grep_string with the literal search text marked in the preview.
-      -- Telescope only highlights the whole matched line; this adds a
-      -- window match on the search string so the exact hit stands out.
       -- Case-sensitivity mirrors rg: smart-case unless opts.case_sensitive.
       local function grep_string_marked(opts)
         opts = opts or {}
@@ -75,27 +105,17 @@ return {
 
         local case = (opts.case_sensitive or search:find("%u")) and [[\C]] or [[\c]]
         local pattern = [[\V]] .. case .. vim.fn.escape(search, "\\")
-
-        -- Hook preview_fn (the method Previewer:preview calls), since
-        -- define_preview is already captured in a closure at construction.
-        local previewer = require("telescope.previewers").vimgrep.new(opts)
-        local preview_fn = previewer.preview_fn
-        previewer.preview_fn = function(self, entry, status)
-          preview_fn(self, entry, status)
-          -- self.state.winid is only filled in later (async), so take the
-          -- window from status, which is populated up front.
-          local win = status.preview_win
-            or (status.layout and status.layout.preview and status.layout.preview.winid)
-          vim.schedule(function()
-            if win and vim.api.nvim_win_is_valid(win) then
-              -- Fixed id so re-adding on every entry is a no-op instead of a pile-up.
-              pcall(vim.fn.matchadd, "TelescopePreviewMatch", pattern, 20, 4242, { window = win })
-            end
-          end)
-        end
-        opts.previewer = previewer
+        opts.previewer = grep_previewer(opts, pattern)
 
         require("telescope.builtin").grep_string(opts)
+      end
+
+      -- live_grep with the wrapping previewer (the search text changes as
+      -- you type, so nothing is marked beyond Telescope's own line).
+      local function live_grep_wrapped(opts)
+        opts = opts or {}
+        opts.previewer = grep_previewer(opts)
+        require("telescope.builtin").live_grep(opts)
       end
 
 
@@ -133,7 +153,7 @@ return {
       -- Search
       -- =========================
       vim.keymap.set("n", "<leader>sl", function()
-        builtin.live_grep({
+        live_grep_wrapped({
           additional_args = function()
             return { "--hidden", "--no-ignore" }
           end,
@@ -262,7 +282,7 @@ return {
           return
         end
 
-        require("telescope.builtin").live_grep({
+        live_grep_wrapped({
           additional_args = function()
             return { "--hidden" }
           end,
