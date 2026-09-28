@@ -15,7 +15,7 @@ scopes; this file covers only what an agent must do differently here.
   shell history. `.gitignore` already lists the known ones; extend it before
   adding a new config directory.
 - Do not commit or push unless asked. Leave changes in the working tree and
-  offer a Conventional Commit message.
+  offer a Conventional Commit message labeled with the repository name.
 
 ## Verify every change
 
