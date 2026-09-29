@@ -5,6 +5,7 @@ set -euo pipefail
 
 BREW_FORMULAE=(
   # --- Shell / CLI ---
+  bash # 4+ for the vendored omarchy-theme-color used by bin/macos/theme.sh
   zsh-autosuggestions
   yazi
   yq
@@ -16,6 +17,17 @@ BREW_FORMULAE=(
 
   # --- Fun ---
   cbonsai
+
+  # --- Neovim language servers and formatters (see nvim lua/plugins/lsp.lua, conform.lua) ---
+  lua-language-server
+  bash-language-server
+  yaml-language-server
+  terraform-ls
+  pyright
+  stylua
+  shfmt
+  prettier
+  ruff
 )
 
 BREW_CASKS=(

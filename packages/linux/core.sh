@@ -32,12 +32,23 @@ PACMAN_PKGS=(
   kitty
   ghostty
   herdr
+
+  # --- Neovim language servers and formatters (see nvim lua/plugins/lsp.lua, conform.lua) ---
+  lua-language-server
+  bash-language-server
+  yaml-language-server
+  pyright
+  stylua
+  shfmt
+  prettier
+  ruff
 )
 
 AUR_PKGS=(
   cbonsai-git
   discordo-git
   opencode
+  terraform-ls
 )
 
 failures=()
