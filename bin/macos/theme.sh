@@ -1,0 +1,174 @@
+#!/usr/bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
+# appdots/bin/macos/theme.sh
+# macOS counterpart of `omarchy theme` for the two apps appdots themes on a
+# Mac: Ghostty and Neovim. It honours the same file contract Omarchy uses on
+# Linux, so the shared Ghostty config and the Neovim theme modules work
+# unchanged on both:
+#
+#   ~/.config/omarchy/themes/<slug>/colors.toml   palette (versioned in appdots)
+#   ~/.config/omarchy/themed/*.tpl                templates (vendored from Omarchy)
+#   ~/.local/state/omarchy/current/theme/         generated ghostty.conf, neovim.lua
+#   ~/.local/state/omarchy/current/theme.name     active slug
+#
+# Themes are plain palette files under active/macos/.config/omarchy/themes/;
+# nothing is downloaded. Palette resolution is Omarchy's own
+# omarchy-theme-color, vendored verbatim in bin/macos/; on Linux
+# doctor/omarchy-vendored.sh flags drift from the original and from the
+# installed Linux themes. Only six-digit hex colours are rendered into the
+# templates, so a palette cannot inject anything into the generated files.
+#
+# Usage:
+#   theme list              themes available (* marks the active one)
+#   theme current           print the active slug
+#   theme set <slug>        render and activate a theme
+#   theme pick              choose with fzf (or a menu) and set (zsh alias: tt)
+#
+# After a set, Ghostty's config is reloaded by sending its reload keystroke
+# through System Events when run inside Ghostty. macOS asks once to allow
+# Ghostty under Privacy & Security > Accessibility; until then the command
+# prints the manual shortcut instead.
+#
+# Requires bash 4+ (brew install bash) for the vendored resolver.
+
+[ -n "${HOME:-}" ] || { printf '❌ HOME is not set\n' >&2; exit 1; }
+THEMES_DIR="$HOME/.config/omarchy/themes"
+TEMPLATES_DIR="$HOME/.config/omarchy/themed"
+STATE_DIR="$HOME/.local/state/omarchy/current"
+CURRENT_DIR="$STATE_DIR/theme"
+NEXT_DIR="$STATE_DIR/next-theme"
+
+die() { printf '❌ %s\n' "$*" >&2; exit 1; }
+info() { printf 'ℹ️  %s\n' "$*"; }
+ok() { printf '✅ %s\n' "$*"; }
+
+# THEME_ALLOW_WITH_OMARCHY=1 lets the test harness run this beside a real
+# Omarchy install with HOME pointed at a scratch directory.
+if [ -z "${THEME_ALLOW_WITH_OMARCHY:-}" ] && command -v omarchy >/dev/null 2>&1; then
+  die "Omarchy owns themes on this machine; use: omarchy theme set <name>"
+fi
+
+resolver="$(command -v omarchy-theme-color || true)"
+[ -n "$resolver" ] || die "omarchy-theme-color not on PATH; run appdots sync.sh"
+
+theme_slugs() {
+  [ -d "$THEMES_DIR" ] || return 0
+  local dir
+  for dir in "$THEMES_DIR"/*/; do
+    [ -f "$dir/colors.toml" ] || continue
+    basename "$dir"
+  done
+}
+
+current_slug() {
+  [ -f "$STATE_DIR/theme.name" ] && cat "$STATE_DIR/theme.name" || true
+}
+
+cmd_list() {
+  local cur slug
+  cur="$(current_slug)"
+  while IFS= read -r slug; do
+    [ -n "$slug" ] || continue
+    if [ "$slug" = "$cur" ]; then printf '* %s\n' "$slug"; else printf '  %s\n' "$slug"; fi
+  done < <(theme_slugs)
+}
+
+cmd_current() {
+  local cur
+  cur="$(current_slug)"
+  [ -n "$cur" ] || die "No theme set yet; run: theme pick"
+  printf '%s\n' "$cur"
+}
+
+# Render every template in TEMPLATES_DIR with the palette's resolved colours.
+render_templates() {
+  local colors="$1" out_dir="$2" sed_script key value tpl name
+  sed_script="$(mktemp)"
+
+  # omarchy-theme-color prints "key<TAB>value" for the resolved palette,
+  # including aliases and derived shades. Run it through bash explicitly so
+  # macOS's /bin/bash 3.2 is never used for it. On top of the resolver's own
+  # charset check, only six-digit hex colours are offered to the templates:
+  # a hex value cannot break out of a Lua string in neovim.lua or add a line
+  # to ghostty.conf, and colours are all the two templates take.
+  while IFS=$'\t' read -r key value; do
+    [[ $key =~ ^[A-Za-z0-9_]+$ ]] || continue
+    [[ $value =~ ^#[0-9A-Fa-f]{6}$ ]] || continue
+    printf 's|{{ %s }}|%s|g\n' "$key" "$value" >>"$sed_script"
+    printf 's|{{ %s_strip }}|%s|g\n' "$key" "${value#\#}" >>"$sed_script"
+  done < <(bash "$resolver" --file "$colors" --all)
+
+  for tpl in "$TEMPLATES_DIR"/*.tpl; do
+    [ -f "$tpl" ] || { rm -f "$sed_script"; die "No templates in $TEMPLATES_DIR; run appdots sync.sh"; }
+    name="$(basename "$tpl" .tpl)"
+    sed -f "$sed_script" "$tpl" >"$out_dir/$name"
+    if grep -q '{{ ' "$out_dir/$name"; then
+      rm -f "$sed_script"
+      die "Unrendered placeholder in $name: $(grep -o '{{ [^}]* }}' "$out_dir/$name" | head -1)"
+    fi
+  done
+  rm -f "$sed_script"
+}
+
+# Ghostty does not watch its config, so trigger its reload_config action
+# (Cmd+Shift+, on macOS) in the frontmost app, but only when this shell is
+# running inside Ghostty so the keystroke cannot land elsewhere.
+reload_ghostty() {
+  [ "$(uname -s)" = Darwin ] || return 0
+  if [ "${TERM_PROGRAM:-}" != ghostty ] && [ -z "${GHOSTTY_RESOURCES_DIR:-}" ]; then
+    info "Ghostty: reload its config (Cmd+Shift+,) in each window"
+    return 0
+  fi
+  if osascript -e 'tell application "System Events" to keystroke "," using {command down, shift down}' >/dev/null 2>&1; then
+    ok "Ghostty config reloaded"
+  else
+    info "Ghostty: reload with Cmd+Shift+, (to automate, allow Ghostty under System Settings > Privacy & Security > Accessibility)"
+  fi
+}
+
+cmd_set() {
+  local slug="${1:-}" colors
+  [ -n "$slug" ] || die "Usage: theme set <slug>"
+  case "$slug" in */*|.*) die "Invalid theme name: $slug" ;; esac
+  colors="$THEMES_DIR/$slug/colors.toml"
+  [ -f "$colors" ] || die "No theme '$slug' under $THEMES_DIR (see: theme list)"
+  [ -L "$colors" ] && die "Refusing $slug: colors.toml is a symlink"
+
+  rm -rf "$NEXT_DIR"
+  mkdir -p "$NEXT_DIR"
+  cp "$colors" "$NEXT_DIR/colors.toml"
+  render_templates "$NEXT_DIR/colors.toml" "$NEXT_DIR"
+
+  # Neovim watches the mtime of neovim.lua and re-applies on the next focus;
+  # Ghostty reads ghostty.conf on config reload.
+  rm -rf "$CURRENT_DIR"
+  mv "$NEXT_DIR" "$CURRENT_DIR"
+  printf '%s\n' "$slug" >"$STATE_DIR/theme.name"
+
+  ok "Theme set to $slug"
+  reload_ghostty
+}
+
+cmd_pick() {
+  local slugs slug
+  slugs="$(theme_slugs)"
+  [ -n "$slugs" ] || die "No themes under $THEMES_DIR; run appdots sync.sh"
+  if command -v fzf >/dev/null 2>&1; then
+    slug="$(printf '%s\n' "$slugs" | fzf --prompt='Theme > ' --height=40% --reverse)" || true
+  else
+    PS3='Theme > '
+    select slug in $slugs; do break; done
+  fi
+  [ -n "${slug:-}" ] || exit 0
+  cmd_set "$slug"
+}
+
+case "${1:-}" in
+  list) cmd_list ;;
+  current) cmd_current ;;
+  set) shift; cmd_set "${1:-}" ;;
+  pick) cmd_pick ;;
+  ''|-h|--help) sed -n '/^# Usage:/,/^#$/p' "$0" | sed 's/^# \{0,1\}//' ;;
+  *) die "Unknown command: $1 (try: theme --help)" ;;
+esac

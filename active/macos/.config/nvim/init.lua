@@ -17,7 +17,7 @@ vim.opt.rtp:prepend(lazypath)
 vim.opt.termguicolors = true
 
 require("lazy").setup("plugins")
+require("omarchy_theme_apply").setup()
 require("vim-options")
 require("remaps")
 require("autocmds")
-require("theme_manager").load_saved_theme()

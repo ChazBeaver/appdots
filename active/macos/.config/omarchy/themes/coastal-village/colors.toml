@@ -1,0 +1,35 @@
+mode = "dark"
+
+# Mediterranean water and painted shutters.
+accent = "#56b2ca"
+selection = "#285898"
+muted = "#637b83"
+
+# Cool evening shadows keep bright coastal accents comfortable on screen.
+background = "#1d2a33"
+dark_background = "#172129"
+darker_background = "#111920"
+lighter_background = "#293946"
+
+# Sunlit limestone and warm plaster.
+foreground = "#e8ded5"
+dark_foreground = "#8da4ad"
+light_foreground = "#c9d2ca"
+bright_foreground = "#f5f1e8"
+
+# Terracotta, olive, bougainvillea, sea, and sunshine.
+red = "#d46f5e"
+yellow = "#e2c768"
+orange = "#d89053"
+green = "#8fac72"
+cyan = "#4cadd1"
+blue = "#6894c9"
+magenta = "#d17aa0"
+brown = "#976c54"
+
+bright_red = "#ed8977"
+bright_yellow = "#f2dc7d"
+bright_green = "#a9c88b"
+bright_cyan = "#6cc8df"
+bright_blue = "#87afe0"
+bright_magenta = "#e79aba"

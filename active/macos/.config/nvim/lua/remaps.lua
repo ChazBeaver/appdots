@@ -166,9 +166,46 @@ end, { desc = "Make file executable" })
 --                              Fun Keymaps
 -- ############################################################################
 
--- Theme Selector
+-- Theme Selector: the appdots `theme` command owns themes on macOS (the
+-- counterpart of Omarchy on Linux). Pick from its list, set it, and re-apply
+-- straight away instead of waiting for the FocusGained hook.
 vim.keymap.set("n", "<leader>tt", function()
-  require("theme_manager").pick_theme()
+  if vim.fn.executable("theme") == 0 then
+    vim.notify("theme command not found; run appdots sync.sh", vim.log.levels.WARN)
+    return
+  end
+  local out = vim.fn.systemlist({ "theme", "list" })
+  if vim.v.shell_error ~= 0 then
+    vim.notify(table.concat(out, "\n"), vim.log.levels.ERROR)
+    return
+  end
+  local themes, current = {}, nil
+  for _, line in ipairs(out) do
+    local mark, slug = line:match("^([* ]) (.+)$")
+    if slug then
+      table.insert(themes, slug)
+      if mark == "*" then current = slug end
+    end
+  end
+  if #themes == 0 then
+    vim.notify("No themes found; see appdots README (Themes on macOS)", vim.log.levels.WARN)
+    return
+  end
+  vim.ui.select(themes, {
+    prompt = "Theme" .. (current and (" (current: " .. current .. ")") or "") .. ":",
+  }, function(choice)
+    if not choice then return end
+    vim.system({ "theme", "set", choice }, { text = true }, function(res)
+      vim.schedule(function()
+        if res.code ~= 0 then
+          vim.notify((res.stderr ~= "" and res.stderr) or res.stdout, vim.log.levels.ERROR)
+          return
+        end
+        require("omarchy_theme_apply").apply()
+        vim.notify("Theme set to " .. choice, vim.log.levels.INFO)
+      end)
+    end)
+  end)
 end, { desc = "Theme picker" })
  
 -- Launch Lazy Menu

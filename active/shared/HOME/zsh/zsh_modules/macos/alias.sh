@@ -1,6 +1,10 @@
 # For Mac
 alias here='open .'
 
+# Theme picker: fzf over the appdots themes, applies to Ghostty and Neovim,
+# then reloads Ghostty (see README "Themes on macOS").
+alias tt='theme pick'
+
 # Edit Ghostty Config
 edit-ghostty() {
     vim $HOME/Library/Application\ Support/com.mitchellh.ghostty/config

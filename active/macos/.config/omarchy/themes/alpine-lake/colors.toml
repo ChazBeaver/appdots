@@ -1,0 +1,32 @@
+# Alpine Lake — derived from Maroon Bells (Colorado) and Half Dome (Yosemite) photos
+mode = "dark"
+
+accent = "#6fa3bd"
+selection = "#2f4a52"
+muted = "#4f6668"
+
+background = "#172422"
+dark_background = "#101a18"
+darker_background = "#0b1210"
+lighter_background = "#243532"
+
+foreground = "#cfd9dc"
+dark_foreground = "#7f959a"
+light_foreground = "#e0e8ea"
+bright_foreground = "#eef3f4"
+
+red = "#c27b6b"
+yellow = "#d4b46a"
+orange = "#cf9a6a"
+green = "#8fb07a"
+cyan = "#7fc0c4"
+blue = "#6fa3bd"
+magenta = "#a58bb0"
+brown = "#6b5040"
+
+bright_red = "#d9917f"
+bright_yellow = "#e6c97e"
+bright_green = "#a6c58e"
+bright_cyan = "#97d3d6"
+bright_blue = "#8ab9d0"
+bright_magenta = "#bba3c5"

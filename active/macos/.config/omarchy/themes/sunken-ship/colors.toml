@@ -1,0 +1,34 @@
+mode = "dark"
+
+# Aqua light filtering through deep water.
+accent = "#39c8ce"
+selection = "#1f6170"
+muted = "#437b88"
+
+# Hull-shadow neutrals sampled from the wallpaper.
+background = "#142d34"
+dark_background = "#181d1e"
+darker_background = "#0d171a"
+lighter_background = "#193b44"
+
+foreground = "#d7f1ef"
+dark_foreground = "#6f9fa5"
+light_foreground = "#a9d6d5"
+bright_foreground = "#efffff"
+
+# Terminal and application semantic colors.
+red = "#e77b72"
+yellow = "#d8c27a"
+orange = "#d79768"
+green = "#81b89a"
+cyan = "#4bcdcf"
+blue = "#3299a3"
+magenta = "#a590b8"
+brown = "#8b7357"
+
+bright_red = "#f29188"
+bright_yellow = "#ead58b"
+bright_green = "#9acbab"
+bright_cyan = "#5ddee2"
+bright_blue = "#81dbd5"
+bright_magenta = "#bca7ca"

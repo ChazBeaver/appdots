@@ -1,0 +1,97 @@
+#      dMMMMMP dMP dMP dMMMMMP dMMMMb dMMMMMMP            
+#     dMP     dMP dMP dMP     dMP dMP   dMP               
+#    dMMMP   dMP dMP dMMMP   dMP dMP   dMP                
+#   dMP      YMvAP" dMP     dMP dMP   dMP                 
+#  dMMMMMP    VP"  dMMMMMP dMP dMP   dMP                  
+#                                                         
+#      dMP dMP .aMMMb  dMMMMb  dMP dMMMMMP .aMMMb  dMMMMb 
+#     dMP dMP dMP"dMP dMP.dMP amr   .dMP" dMP"dMP dMP dMP 
+#    dMMMMMP dMP dMP dMMMMK" dMP  .dMP"  dMP dMP dMP dMP  
+#   dMP dMP dMP.aMP dMP"AMF dMP .dMP"   dMP.aMP dMP dMP   
+#  dMP dMP  VMMMP" dMP dMP dMP dMMMMMP  VMMMP" dMP dMP    
+#                                                         
+
+# Canonical Horizon Terminal Dark UI roles
+mode = "dark"
+accent = "#26BBD9"
+active_border_color = "#3FC4DE"
+active_tab_background = "#26BBD9"
+hyprland_active_border = "rgb(59E1E3) rgb(59E1E3) rgb(26BBD9) rgb(26BBD9) rgb(29D398) rgb(29D398) 45deg"
+hyprland_inactive_border = "rgba(59E1E355)"
+
+# Cursor colors
+cursor = "#E3E6EE"
+
+# Primary colors
+foreground = "#CBCED0"
+background = "#1C1E26"
+
+# Selection colors
+selection_foreground = "#1C1E26"
+selection_background = "#26BBD9"
+
+# Normal colors (ANSI 0-7)
+color0 = "#1C1E26"
+color1 = "#E95678"
+color2 = "#29D398"
+color3 = "#FAC29A"
+color4 = "#26BBD9"
+color5 = "#EE64AC"
+color6 = "#59E1E3"
+color7 = "#CBCED0"
+
+# Bright colors (ANSI 8-15)
+color8 = "#6F6F70"
+color9 = "#EC6A88"
+color10 = "#3FDAA4"
+color11 = "#FBC3A7"
+color12 = "#3FC4DE"
+color13 = "#F075B5"
+color14 = "#6BE4E6"
+color15 = "#E3E6EE"
+#  
+#  _______/\\\\\_______/\\\\\\____________/\\\__                                                  
+#   _____/\\\///\\\____\////\\\___________\/\\\__                                                 
+#    ___/\\\/__\///\\\_____\/\\\___________\/\\\__                                                
+#     __/\\\______\//\\\____\/\\\___________\/\\\__                                               
+#      _\/\\\_______\/\\\____\/\\\______/\\\\\\\\\__                                              
+#       _\//\\\______/\\\_____\/\\\_____/\\\////\\\__                                             
+#        __\///\\\__/\\\_______\/\\\____\/\\\__\/\\\__                                            
+#         ____\///\\\\\/______/\\\\\\\\\_\//\\\\\\\/\\_                                           
+#          ______\/////_______\/////////___\///////\//__                                          
+#  ______/\\\\\\\\\\\________________/\\\_______________________/\\\______________________        
+#   _____\/////\\\///________________\/\\\______________________\/\\\______________________       
+#    _________\/\\\___________________\/\\\______________________\/\\\______________________      
+#     _________\/\\\_________/\\\\\____\/\\\____________/\\\\\____\/\\\____________/\\\\\____     
+#      _________\/\\\_______/\\\///\\\__\/\\\\\\\\\____/\\\///\\\__\/\\\\\\\\\____/\\\///\\\__    
+#       _________\/\\\______/\\\__\//\\\_\/\\\////\\\__/\\\__\//\\\_\/\\\////\\\__/\\\__\//\\\_   
+#        __/\\\___\/\\\_____\//\\\__/\\\__\/\\\__\/\\\_\//\\\__/\\\__\/\\\__\/\\\_\//\\\__/\\\__  
+#         _\//\\\\\\\\\_______\///\\\\\/___\/\\\\\\\\\___\///\\\\\/___\/\\\\\\\\\___\///\\\\\/___ 
+#          __\/////////__________\/////_____\/////////______\/////_____\/////////______\/////_____
+#  
+
+# Omarchy Quattro semantic palette roles. These mirror the Base24 extension.
+bg = "#1C1E26"
+lighter_bg = "#232530"
+selection = "#2E303E"
+muted = "#6F6F70"
+dark_fg = "#9DA0A2"
+fg = "#CBCED0"
+light_fg = "#DCDFE4"
+bright_fg = "#E3E6EE"
+red = "#E95678"
+green = "#29D398"
+yellow = "#FAC29A"
+blue = "#26BBD9"
+magenta = "#EE64AC"
+cyan = "#59E1E3"
+orange = "#FAB795"
+brown = "#F09383"
+dark_bg = "#15171D"
+darker_bg = "#0E0F13"
+bright_red = "#EC6A88"
+bright_green = "#3FDAA4"
+bright_yellow = "#FBC3A7"
+bright_blue = "#3FC4DE"
+bright_magenta = "#F075B5"
+bright_cyan = "#6BE4E6"
