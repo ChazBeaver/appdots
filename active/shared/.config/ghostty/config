@@ -9,8 +9,14 @@
 # Dynamic theme colors
 config-file = ?"~/.local/state/omarchy/current/theme/ghostty.conf"
 
-# Always start Zsh through the appdots-managed availability check.
-command = ghostty-shell
+# Always start Zsh through the appdots-managed availability check. Ghostty
+# spawns this via a bare, non-login shell (`bash --noprofile --norc`) that
+# never sources any rc file, so ~/.local/bin is not on its PATH; a plain
+# `ghostty-shell` PATH lookup there fails with "failed to launch the
+# requested command". Using ~/ instead makes Ghostty's own shell-expansion
+# round-trip (its default mode; see its `command` docs) expand the tilde
+# before exec, which needs no PATH lookup at all.
+command = ~/.local/bin/ghostty-shell
 
 # Font
 font-family = "FiraCode Nerd Font"
