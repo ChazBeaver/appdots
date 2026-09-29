@@ -5,7 +5,8 @@ IFS=$'\n\t'
 # Compare installed packages against packages/$OS/core.sh.
 #
 # Filters (linux):
-#   - Omarchy base manifest (~/.local/share/omarchy/install/omarchy-base.packages)
+#   - Omarchy base manifest (/usr/share/omarchy/install/omarchy-base.packages,
+#     or the older ~/.local/share/omarchy location on pre-package installs)
 #   - Hard-coded arch-base essentials (kernel, firmware, microcode, bootloader, etc.)
 #   - Sibling repo: hyprdots's declared packages, IF hyprdots exists on this machine
 #
@@ -127,7 +128,22 @@ fi
 
 appdots_declared="$(extract_packages_from_script "$pkg_script")"
 
-omarchy_base_file="$HOME/.local/share/omarchy/install/omarchy-base.packages"
+# Omarchy moved from a git checkout under ~/.local/share to a system package
+# under /usr/share; accept whichever manifest exists.
+omarchy_base_file=""
+for candidate in \
+  /usr/share/omarchy/install/omarchy-base.packages \
+  "$HOME/.local/share/omarchy/install/omarchy-base.packages"; do
+  if [ -f "$candidate" ]; then
+    omarchy_base_file="$candidate"
+    break
+  fi
+done
+if [ -n "$omarchy_base_file" ]; then
+  log_info "Omarchy manifest: $omarchy_base_file (filtering its packages)"
+else
+  log_warn "No Omarchy base manifest found — drift report won't filter Omarchy's packages"
+fi
 omarchy_base="$(extract_omarchy_base "$omarchy_base_file")"
 
 arch_essentials="$(printf '%s\n' "${ARCH_ESSENTIALS[@]}" | sort -u)"
