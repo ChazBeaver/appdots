@@ -66,15 +66,20 @@ fi
 echo
 
 # ---- 3. System tweaks ----
-sys_dir="$SCRIPT_DIR/system/$OS"
-if [ -d "$sys_dir" ]; then
-  log_step "Step 3/4: Apply system tweaks ($OS)"
-  find "$sys_dir" -mindepth 1 -maxdepth 1 -type f -name '*.sh' | sort | while read -r script; do
-    echo "  ▶ $(basename "$script")"
+# system/shared/ runs first, then system/$OS. Scripts are run as temp copies,
+# so they locate the repo via the exported APP_DOTS_DIR, not their own path.
+log_step "Step 3/4: Apply system tweaks (shared + $OS)"
+ran_system=0
+for sys_dir in "$SCRIPT_DIR/system/shared" "$SCRIPT_DIR/system/$OS"; do
+  [ -d "$sys_dir" ] || continue
+  while read -r script; do
+    echo "  ▶ $(basename "$sys_dir")/$(basename "$script")"
     run_snapshot "$script"
-  done
-else
-  log_warn "Step 3/4: No system/ dir for $OS — skipping"
+    ran_system=1
+  done < <(find "$sys_dir" -mindepth 1 -maxdepth 1 -type f -name '*.sh' | sort)
+done
+if [ "$ran_system" -eq 0 ]; then
+  log_warn "Step 3/4: No system/ scripts for shared or $OS — skipping"
 fi
 echo
 
