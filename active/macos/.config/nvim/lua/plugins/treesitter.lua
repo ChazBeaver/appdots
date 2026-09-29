@@ -15,7 +15,12 @@ return {
 
       nts.setup()
 
-      local ensure_installed = { "lua", "bash", "c", "javascript", "go" }
+      -- The main branch has no ensure_installed; install what is missing.
+      -- Needs the tree-sitter CLI and a C compiler on PATH.
+      local ensure_installed = {
+        "bash", "c", "dockerfile", "go", "hcl", "javascript", "json", "lua",
+        "markdown", "markdown_inline", "python", "terraform", "toml", "yaml",
+      }
       local installed = ts_config.get_installed()
       local missing = vim.tbl_filter(function(lang)
         return not vim.tbl_contains(installed, lang)
@@ -24,6 +29,7 @@ return {
         nts.install(missing)
       end
 
+      -- Highlighting and indentation are opt-in per buffer on main.
       vim.api.nvim_create_autocmd("FileType", {
         callback = function(ev)
           if pcall(vim.treesitter.start, ev.buf) then
