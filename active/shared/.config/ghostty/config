@@ -1,7 +1,10 @@
-# On macOS, Ghostty reads ~/Library/Application Support/com.mitchellh.ghostty/config,
-# not ~/.config/ghostty/config. sync.sh links this file into both places (see
-# active/macos/library/Application Support/com.mitchellh.ghostty/config), so
-# there is nothing to copy by hand.
+# Ghostty loads ~/.config/ghostty/config on every platform unconditionally,
+# then on macOS also loads ~/Library/Application Support/com.mitchellh.ghostty/config
+# on top (see src/config/Config.zig loadDefaultFiles upstream). This file
+# alone is therefore enough on macOS too; deliberately do NOT also place a
+# copy under Application Support, since two copies both containing the
+# config-file line below make Ghostty load that path twice and refuse it
+# with "cycle detected".
 
 # Dynamic theme colors
 config-file = ?"~/.local/state/omarchy/current/theme/ghostty.conf"
