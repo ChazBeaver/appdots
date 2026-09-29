@@ -33,6 +33,9 @@ IFS=$'\n\t'
 # Requires bash 4+ (brew install bash) for the vendored resolver; this script
 # finds it explicitly instead of trusting PATH, since macOS's own /bin/bash
 # is 3.2 and is still findable as a bare `bash` on a stock shell.
+#
+# Herdr follows along automatically (its config already sets theme.name =
+# "terminal"); see notify_herdr below for the one nudge it needs.
 
 [ -n "${HOME:-}" ] || { printf '❌ HOME is not set\n' >&2; exit 1; }
 THEMES_DIR="$HOME/.config/omarchy/themes"
@@ -129,6 +132,30 @@ render_templates() {
   rm -f "$sed_script"
 }
 
+# Herdr's own "terminal" theme (see ~/.config/herdr/config.toml [theme]
+# name = "terminal") already follows the host terminal's live ANSI palette,
+# which is exactly what render_templates just wrote into Ghostty's config.
+# Herdr only re-reads those colors on a resize or SIGWINCH though (its own
+# docs: https://herdr.dev, "Theme" section), so nudge the attached client
+# after every set. Walks the process ancestry to find it, since the socket
+# API describes panes, not the client's own PID, and only the nearest
+# ancestor named `herdr` is the client actually rendering this pane.
+notify_herdr() {
+  [ "${HERDR_ENV:-}" = 1 ] || return 0
+  local pid="$$" ppid comm depth=0
+  while [ "$depth" -lt 12 ]; do
+    ppid="$(ps -o ppid= -p "$pid" 2>/dev/null | tr -d ' ')"
+    [ -n "$ppid" ] && [ "$ppid" != 0 ] || return 0
+    comm="$(ps -o comm= -p "$ppid" 2>/dev/null)"
+    if [ "$comm" = herdr ]; then
+      kill -WINCH "$ppid" 2>/dev/null && info "Herdr: refreshed UI colors"
+      return 0
+    fi
+    pid="$ppid"
+    depth=$((depth + 1))
+  done
+}
+
 # Ghostty does not watch its config, so trigger its reload_config action
 # (Cmd+Shift+, on macOS) in the frontmost app, but only when this shell is
 # running inside Ghostty so the keystroke cannot land elsewhere.
@@ -166,6 +193,7 @@ cmd_set() {
 
   ok "Theme set to $slug"
   reload_ghostty
+  notify_herdr
 }
 
 cmd_pick() {

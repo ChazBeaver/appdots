@@ -103,9 +103,19 @@ Scripts in `bin/` are symlinked into `~/.local/bin/` with `.sh` stripped from th
 ### Themes on macOS
 
 Omarchy owns themes on Linux. On macOS the `theme` command (`bin/macos/theme.sh`)
-honours the same file contract for the two apps appdots themes there, Ghostty
-and Neovim, so both read their theme from `~/.local/state/omarchy/current/theme/`
+honours the same file contract for the apps appdots themes there, Ghostty and
+Neovim, so both read their theme from `~/.local/state/omarchy/current/theme/`
 on either OS and need no per-OS config. Nothing is downloaded on the Mac.
+
+Herdr follows along too, with no generated file of its own. Its own config
+already sets `theme.name = "terminal"` (see `~/.config/herdr/config.toml`
+`[theme]`), which makes Herdr's UI colors mirror whatever ANSI palette its
+host terminal (Ghostty) is currently rendering. Herdr only re-reads that
+palette on a resize or `SIGWINCH` though, so `theme set` signals the attached
+Herdr client after reloading Ghostty (`notify_herdr` in `theme.sh`, found by
+walking the process ancestry for the nearest `herdr` client; a no-op outside
+a Herdr pane). Herdr's per-color `[theme.custom]` overrides are left alone,
+since there is no per-theme file to render them into.
 
 | Piece | Where | Notes |
 |:------|:------|:------|
