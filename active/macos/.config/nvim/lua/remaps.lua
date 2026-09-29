@@ -19,9 +19,6 @@ vim.keymap.set("n", "<leader>e", vim.cmd.Ex,
 vim.keymap.set("n", "<leader>ER", [[:Explore .<CR>]],
   { desc = "Explore Current Working Directory" })
  
--- Explore Home Directory
-vim.keymap.set("n", "<leader>EH", [[:Explore ~/.<CR>]],
-{ desc = "Explore Home Root Directory" })
 
 -- ============================================================
 -- PATH HELPERS
@@ -62,19 +59,10 @@ end
 
 local function get_repo_root()
   local file_dir = get_file_dir()
-
   if file_dir == "" then
     return nil
   end
-
-  local cmd = "git -C " .. vim.fn.shellescape(file_dir) .. " rev-parse --show-toplevel"
-  local result = vim.fn.systemlist(cmd)
-
-  if vim.v.shell_error ~= 0 or not result or not result[1] or result[1] == "" then
-    return nil
-  end
-
-  return vim.fn.fnamemodify(result[1], ":p"):gsub("/$", "")
+  return require("git_util").root(file_dir)
 end
 
 local function get_repo_relative_path()
@@ -157,6 +145,22 @@ end, { desc = "Copy file name" })
 vim.keymap.set("n", "<leader>yfd", function()
   yank_path("dir", get_repo_relative_dir())
 end, { desc = "Copy repo-relative directory path" })
+
+-- <leader>sh → chmod +x the file under the cursor (netrw, Neo-tree) or the
+-- current file
+vim.keymap.set("n", "<leader>sh", function()
+  local path = get_absolute_path()
+  if path == "" then
+    vim.notify("No file under cursor", vim.log.levels.WARN)
+    return
+  end
+  vim.fn.system({ "chmod", "+x", path })
+  if vim.v.shell_error ~= 0 then
+    vim.notify("Failed to chmod: " .. path, vim.log.levels.ERROR)
+    return
+  end
+  vim.notify("Made executable: " .. path, vim.log.levels.INFO)
+end, { desc = "Make file executable" })
  
 -- ############################################################################
 --                              Fun Keymaps
@@ -171,9 +175,9 @@ end, { desc = "Theme picker" })
 vim.keymap.set("n", "<leader>l", vim.cmd.Lazy,
   { desc = "Launch Lazy Menu" })
  
--- Clear Highlight Search
-vim.keymap.set("n", "<leader>nh", vim.cmd.noh, -- short for nohlsearch
-  { desc = "[P] No Highlight - Clear Highlight Search" })
+-- <Esc> in normal mode clears search highlighting. Neovim's default key for
+-- this is <C-l>, which the window navigation maps above take over.
+vim.keymap.set("n", "<Esc>", "<cmd>nohlsearch<CR>", { desc = "Clear search highlight" })
  
 -- Toggle Relative Numbers
 vim.keymap.set("n", "<leader>rnu", function()
@@ -188,9 +192,11 @@ vim.keymap.set("n", "<leader>mD", [[:delmarks!<CR>]],
 vim.keymap.set("v", "<leader>n", [[:norm ]],
 { desc = "Edit Highlighted Lines with `:norm` " })
 
--- Copy the entire file to clipboard
-vim.keymap.set("n", "<leader>ya", [[ggVG"+y]],
-  { desc = "Copy entire file to clipboard" })
+-- Copy the entire file to clipboard without moving the cursor
+vim.keymap.set("n", "<leader>ya", function()
+  vim.cmd("%yank +")
+  vim.notify("Copied entire file (" .. vim.api.nvim_buf_line_count(0) .. " lines)", vim.log.levels.INFO)
+end, { desc = "Copy entire file to clipboard" })
 
 -- Highlight the entire file
 vim.keymap.set("n", "<leader>va", [[ggVG]],
@@ -208,33 +214,38 @@ vim.keymap.set("n", "<leader>cd", CopyCurrentDate, { desc = "Copy current date (
 -- When searching for stuff, search results show in the middle #NOTE
 vim.keymap.set("n", "n", "nzzzv")
 vim.keymap.set("n", "N", "Nzzzv")
+
+-- Keep the cursor centered when paging too
+vim.keymap.set("n", "<C-d>", "<C-d>zz")
+vim.keymap.set("n", "<C-u>", "<C-u>zz")
+
+-- Leave terminal insert mode with a double <Esc>
+vim.keymap.set("t", "<Esc><Esc>", [[<C-\><C-n>]], { desc = "Exit terminal mode" })
+
+-- Delete the current buffer but keep the window open on another buffer
+vim.keymap.set("n", "<leader>bd", function()
+  local buf = vim.api.nvim_get_current_buf()
+  if vim.bo[buf].modified then
+    vim.notify("Buffer has unsaved changes; write it first or use :bd!", vim.log.levels.WARN)
+    return
+  end
+  for _, win in ipairs(vim.api.nvim_list_wins()) do
+    if vim.api.nvim_win_get_buf(win) == buf then
+      vim.api.nvim_win_call(win, function()
+        local ok = pcall(vim.cmd, "bprevious")
+        if not ok or vim.api.nvim_get_current_buf() == buf then
+          pcall(vim.cmd, "enew")
+        end
+      end)
+    end
+  end
+  pcall(vim.api.nvim_buf_delete, buf, {})
+end, { desc = "Delete buffer, keep window" })
  
 -- Switch back to the previous buffer you were just on
 vim.keymap.set("n", "<leader><Tab>", "<C-^>",
 { desc = "Switch to previous buffer" })
  
--- Make file exacutable
-vim.api.nvim_create_autocmd("FileType", {
-  pattern = "netrw",
-  callback = function()
-    vim.keymap.set("n", "<leader>sh", function()
-      local filename = vim.fn.getline("."):match("%S+$")
-      local dir = vim.b.netrw_curdir
-      if filename and dir then
-        local fullpath = dir .. "/" .. filename
-        local ok = os.execute("chmod +x " .. vim.fn.shellescape(fullpath))
-        if ok == 0 then
-          print("Made executable: " .. fullpath)
-        else
-          print("Failed to chmod: " .. fullpath)
-        end
-      else
-        print("Could not determine file path")
-      end
-    end, { buffer = true, desc = "Make file executable" })
-  end,
-})
-
 
 -- ############################################################################
 --                         Begin of markdown section

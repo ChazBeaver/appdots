@@ -119,17 +119,14 @@ return {
         })
       end, { desc = "Find ALL files from $HOME" })
 
-      vim.keymap.set("n", "<leader>fo", function()
-        require("telescope.builtin").find_files({
-          cwd = vim.fn.expand("~/.local/share/omarchy"),
-          hidden = true,
-          no_ignore = true,
-        })
-      end, { desc = "Find Omarchy files" })
-
       -- vim.keymap.set("n", "<leader>fg", builtin.git_files, { desc = "Find git files" })
       vim.keymap.set("n", "<leader>fb", builtin.buffers, { desc = "Find buffers" })
       vim.keymap.set("n", "<leader>fr", builtin.oldfiles, { desc = "Recent files" })
+      vim.keymap.set("n", "<leader>fm", builtin.marks, { desc = "Find marks" })
+      vim.keymap.set("n", "<leader>fh", builtin.help_tags, { desc = "Find help" })
+      vim.keymap.set("n", "<leader>fk", builtin.keymaps, { desc = "Find keymaps" })
+      vim.keymap.set("n", "<leader>f:", builtin.command_history, { desc = "Command history" })
+      vim.keymap.set("n", "<leader>f.", builtin.resume, { desc = "Resume last picker" })
 
       -- =========================
       -- Search
@@ -258,8 +255,8 @@ return {
       end, { desc = "Search literal string and replace with confirmation" })
 
       vim.keymap.set("n", "<leader>sg", function()
-        local git_root = vim.fn.systemlist("git rev-parse --show-toplevel")[1]
-        if not git_root or git_root == "" then
+        local git_root = require("git_util").root()
+        if not git_root then
           vim.notify("Not inside a git repository", vim.log.levels.WARN)
           return
         end
@@ -273,35 +270,21 @@ return {
       end, { desc = "Search git repo" })
 
       vim.keymap.set("n", "<leader>gfd", function()
+        local git_util = require("git_util")
         local filepath = vim.fn.expand("%:p")
         if filepath == "" then
           vim.notify("No file in current buffer", vim.log.levels.WARN)
           return
         end
 
-        local file_dir = vim.fn.fnamemodify(filepath, ":h")
-        local root = vim.fn.systemlist({ "git", "-C", file_dir, "rev-parse", "--show-toplevel" })[1]
-        if vim.v.shell_error ~= 0 or not root or root == "" then
+        local root = git_util.root(vim.fn.fnamemodify(filepath, ":h"))
+        if not root then
           vim.notify("Current file is not in a git repository", vim.log.levels.ERROR)
           return
         end
-
         local rel_path = filepath:sub(#root + 2)
 
-        -- Collect local + remote branches (skip HEAD aliases)
-        local raw = vim.fn.systemlist({
-          "git", "-C", root, "for-each-ref",
-          "--format=%(refname:short)",
-          "refs/heads/", "refs/remotes/",
-        })
-        local branches = {}
-        for _, b in ipairs(raw) do
-          b = vim.trim(b)
-          if b ~= "" and not b:match("/HEAD$") then
-            table.insert(branches, b)
-          end
-        end
-
+        local branches = git_util.branches(root, true)
         if vim.tbl_isempty(branches) then
           vim.notify("No git branches found", vim.log.levels.WARN)
           return
@@ -324,52 +307,25 @@ return {
               if not selection then return end
               local branch = selection[1]
 
-              local diff = vim.fn.systemlist({
-                "git", "-C", root, "--no-pager", "diff", branch, "--", filepath,
-              })
-              if vim.v.shell_error ~= 0 then
+              local diff = git_util.git(root, "--no-pager", "diff", branch, "--", filepath)
+              if not diff then
                 vim.notify("git diff failed for " .. branch, vim.log.levels.ERROR)
                 return
               end
-              if not diff or vim.tbl_isempty(diff) then
+              if vim.tbl_isempty(diff) then
                 diff = { "No differences between current file and " .. branch }
               end
 
-              local buf = vim.api.nvim_create_buf(false, true)
-              vim.bo[buf].bufhidden = "wipe"
-              local header = {
-                "File:   " .. rel_path,
-                "Branch: " .. branch,
-                "Cmd:    git diff " .. branch .. " -- " .. rel_path,
-                string.rep("─", 80),
-              }
-              vim.api.nvim_buf_set_lines(buf, 0, -1, false, vim.list_extend(header, diff))
-              vim.bo[buf].modifiable = false
-              vim.bo[buf].filetype = "diff"
-
-              local width  = math.floor(vim.o.columns * 0.85)
-              local height = math.floor(vim.o.lines * 0.80)
-              local win = vim.api.nvim_open_win(buf, true, {
-                relative   = "editor",
-                width      = width,
-                height     = height,
-                col        = math.floor((vim.o.columns - width) / 2),
-                row        = math.floor((vim.o.lines - height) / 2),
-                style      = "minimal",
-                border     = "rounded",
-                title      = " Compare against " .. branch .. " ",
-                title_pos  = "center",
+              git_util.float({
+                title = " Compare against " .. branch .. " ",
+                filetype = "diff",
+                lines = vim.list_extend({
+                  "File:   " .. rel_path,
+                  "Branch: " .. branch,
+                  "Cmd:    git diff " .. branch .. " -- " .. rel_path,
+                  string.rep("─", 80),
+                }, diff),
               })
-              vim.wo[win].wrap = false
-              vim.wo[win].cursorline = true
-
-              local function close()
-                if vim.api.nvim_win_is_valid(win) then
-                  vim.api.nvim_win_close(win, true)
-                end
-              end
-              vim.keymap.set("n", "q", close, { buffer = buf, nowait = true, silent = true })
-              vim.keymap.set("n", "<Esc>", close, { buffer = buf, nowait = true, silent = true })
             end)
             return true
           end,
@@ -386,7 +342,7 @@ return {
       vim.keymap.set("v", "<leader>gfh", builtin.git_bcommits_range, { desc = "Git history for selected lines" })
 
       -- =========================
-      -- Diagnostics / help
+      -- Diagnostics
       -- =========================
       vim.keymap.set("n", "<leader>sd", builtin.diagnostics, { desc = "Search diagnostics" })
 

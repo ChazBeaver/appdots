@@ -25,19 +25,13 @@ return {
     -- ============================================================
     -- Helpers
     -- ============================================================
+    local git_util = require("git_util")
+
     local function git_root_for_path(path)
       if not path or path == "" then
         return nil
       end
-
-      local dir = vim.fn.fnamemodify(path, ":h")
-      local result = vim.fn.systemlist({ "git", "-C", dir, "rev-parse", "--show-toplevel" })
-
-      if vim.v.shell_error ~= 0 or not result[1] or result[1] == "" then
-        return nil
-      end
-
-      return result[1]
+      return git_util.root(vim.fn.fnamemodify(path, ":h"))
     end
 
     local function current_file_path()
@@ -52,24 +46,6 @@ return {
       if vim.bo.modified then
         vim.cmd("write")
       end
-    end
-
-    local function resolve_git_root()
-      local filepath = current_file_path()
-      local root = filepath and git_root_for_path(filepath)
-
-      if root then
-        return root
-      end
-
-      local cwd = vim.fn.getcwd()
-      local result = vim.fn.systemlist({ "git", "-C", cwd, "rev-parse", "--show-toplevel" })
-
-      if vim.v.shell_error ~= 0 or not result[1] or result[1] == "" then
-        return nil
-      end
-
-      return result[1]
     end
 
     local function stage_current_file()
@@ -98,7 +74,7 @@ return {
     end
 
     local function stage_all_files()
-      local root = resolve_git_root()
+      local root = git_util.root()
       if not root then
         vim.notify("Could not determine Git repository root", vim.log.levels.ERROR)
         return
@@ -116,7 +92,7 @@ return {
     end
 
     local function quick_push_origin_head()
-      local root = resolve_git_root()
+      local root = git_util.root()
       if not root then
         vim.notify("Could not determine Git repository root", vim.log.levels.ERROR)
         return
@@ -136,39 +112,6 @@ return {
     -- ============================================================
     -- Telescope-powered merge helpers
     -- ============================================================
-    local function git_current_branch(root)
-      local result = vim.fn.systemlist({ "git", "-C", root, "branch", "--show-current" })
-      if vim.v.shell_error ~= 0 or not result[1] or result[1] == "" then
-        return nil
-      end
-      return vim.trim(result[1])
-    end
-
-    local function git_local_branches(root)
-      local result = vim.fn.systemlist({
-        "git",
-        "-C",
-        root,
-        "for-each-ref",
-        "--format=%(refname:short)",
-        "refs/heads/",
-      })
-
-      if vim.v.shell_error ~= 0 then
-        return {}
-      end
-
-      local branches = {}
-      for _, branch in ipairs(result) do
-        branch = vim.trim(branch)
-        if branch ~= "" then
-          table.insert(branches, branch)
-        end
-      end
-
-      return branches
-    end
-
     local function telescope_pick_branch(opts, on_select)
       opts = opts or {}
 
@@ -183,13 +126,13 @@ return {
         return
       end
 
-      local root = resolve_git_root()
+      local root = git_util.root()
       if not root then
         vim.notify("Could not determine Git repository root", vim.log.levels.ERROR)
         return
       end
 
-      local branches = git_local_branches(root)
+      local branches = git_util.branches(root)
       if vim.tbl_isempty(branches) then
         vim.notify("No local git branches found", vim.log.levels.WARN)
         return
@@ -235,13 +178,13 @@ return {
     end
 
     local function merge_two_selected_branches()
-      local root = resolve_git_root()
+      local root = git_util.root()
       if not root then
         vim.notify("Could not determine Git repository root", vim.log.levels.ERROR)
         return
       end
 
-      local current = git_current_branch(root)
+      local current = git_util.current_branch(root)
 
       telescope_pick_branch({
         prompt_title = current and ("Merge FROM branch (current: " .. current .. ")") or "Merge FROM branch",
@@ -270,66 +213,6 @@ return {
           vim.notify("Merged " .. source_branch .. " into " .. target_branch, vim.log.levels.INFO)
         end)
       end)
-    end
-
-    -- ============================================================
-    -- Floating preview helpers
-    -- ============================================================
-    local function open_centered_float(opts)
-      local buf = vim.api.nvim_create_buf(false, true)
-      vim.bo[buf].bufhidden = "wipe"
-      vim.bo[buf].modifiable = true
-
-      vim.api.nvim_buf_set_lines(buf, 0, -1, false, opts.lines or {})
-      vim.bo[buf].modifiable = false
-
-      if opts.filetype then
-        vim.bo[buf].filetype = opts.filetype
-      end
-
-      local width = opts.width or math.floor(vim.o.columns * 0.85)
-      local height = opts.height or math.floor(vim.o.lines * 0.80)
-      local col = math.floor((vim.o.columns - width) / 2)
-      local row = math.floor((vim.o.lines - height) / 2)
-
-      local win = vim.api.nvim_open_win(buf, true, {
-        relative = "editor",
-        width = width,
-        height = height,
-        col = col,
-        row = row,
-        style = "minimal",
-        border = "rounded",
-        title = opts.title or " Preview ",
-        title_pos = "center",
-      })
-
-      vim.wo[win].wrap = opts.wrap or false
-      vim.wo[win].cursorline = true
-
-      local function close_float()
-        if vim.api.nvim_win_is_valid(win) then
-          vim.api.nvim_win_close(win, true)
-        end
-      end
-
-      vim.keymap.set("n", "q", close_float, {
-        buffer = buf,
-        noremap = true,
-        silent = true,
-        nowait = true,
-        desc = "Close floating window",
-      })
-
-      vim.keymap.set("n", "<Esc>", close_float, {
-        buffer = buf,
-        noremap = true,
-        silent = true,
-        nowait = true,
-        desc = "Close floating window",
-      })
-
-      return buf, win
     end
 
     -- ============================================================
@@ -378,7 +261,7 @@ return {
         return
       end
 
-      local root = resolve_git_root()
+      local root = git_util.root()
       if not root then
         vim.notify("Could not determine Git repository root", vim.log.levels.ERROR)
         return
@@ -432,7 +315,7 @@ return {
         string.rep("─", 80),
       }
 
-      open_centered_float({
+      git_util.float({
         title = " Neogit Preview ",
         filetype = "diff",
         lines = vim.list_extend(header, output),
@@ -443,7 +326,7 @@ return {
     end
 
     local function open_git_status_short_float()
-      local root = resolve_git_root()
+      local root = git_util.root()
       if not root then
         vim.notify("Could not determine Git repository root", vim.log.levels.ERROR)
         return
@@ -459,7 +342,7 @@ return {
         output = { "Working tree clean" }
       end
 
-      open_centered_float({
+      git_util.float({
         title = " git status --short ",
         lines = output,
         width = math.floor(vim.o.columns * 0.60),
@@ -557,7 +440,7 @@ return {
     }))
 
     map("n", "<leader>gcm", function()
-      local root = resolve_git_root()
+      local root = git_util.root()
       if not root then
         vim.notify("Could not determine Git repository root", vim.log.levels.ERROR)
         return
@@ -586,5 +469,4 @@ return {
       desc = "Pick source branch, then target branch, then merge",
     }))
   end,
-  opts = {},
 }

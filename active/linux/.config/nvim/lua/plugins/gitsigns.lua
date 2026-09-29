@@ -12,46 +12,6 @@ return {
     local map = vim.keymap.set
     local opts = { noremap = true, silent = true }
 
-    local function git(args)
-      local result = vim.fn.systemlist(args)
-      if vim.v.shell_error ~= 0 then
-        return nil
-      end
-      return result
-    end
-
-    local function git_ref_exists(ref)
-      local result = git({ "git", "rev-parse", "--verify", ref })
-      return result ~= nil
-    end
-
-    local function resolve_primary_branch_ref()
-      -- First choice: whatever origin/HEAD points to, usually origin/main or origin/master
-      local origin_head = git({ "git", "symbolic-ref", "--quiet", "refs/remotes/origin/HEAD" })
-      if origin_head and origin_head[1] then
-        local ref = origin_head[1]:gsub("^refs/remotes/", "")
-        if ref ~= "" then
-          return ref
-        end
-      end
-
-      -- Fallbacks
-      local candidates = {
-        "origin/main",
-        "origin/master",
-        "main",
-        "master",
-      }
-
-      for _, ref in ipairs(candidates) do
-        if git_ref_exists(ref) then
-          return ref
-        end
-      end
-
-      return nil
-    end
-
     local function gs_call(method, ...)
       local args = { ... }
       return function()
@@ -78,7 +38,8 @@ return {
         return
       end
 
-      local target = resolve_primary_branch_ref()
+      local root = require("git_util").root()
+      local target = root and require("git_util").primary_branch(root)
       if not target then
         vim.notify("No primary branch found (tried origin/main, origin/master, main, master)", vim.log.levels.WARN)
         return
@@ -123,5 +84,4 @@ return {
       desc = "Git reset hunk",
     }))
   end,
-  opts = {},
 }

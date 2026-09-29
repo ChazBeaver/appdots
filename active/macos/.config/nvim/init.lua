@@ -19,4 +19,5 @@ vim.opt.termguicolors = true
 require("lazy").setup("plugins")
 require("vim-options")
 require("remaps")
+require("autocmds")
 require("theme_manager").load_saved_theme()
