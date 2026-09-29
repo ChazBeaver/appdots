@@ -1,0 +1,33 @@
+# Omacarchy is an intentionally monochrome/grayscale theme (see the upstream
+# README); accent is a representative light gray rather than a hue.
+mode = "dark"
+
+accent = "#C0C0C0"
+selection = "#808080"
+muted = "#2C2C2E"
+
+background = "#1C1C1E"
+dark_background = "#151517"
+darker_background = "#0e0e0f"
+lighter_background = "#1C1C1E"
+
+foreground = "#FFFFFF"
+dark_foreground = "#2C2C2E"
+light_foreground = "#FFFFFF"
+bright_foreground = "#F2F2F2"
+
+red = "#4A4A4A"
+yellow = "#6A6A6A"
+orange = "#6A6A6A"
+green = "#5A5A5A"
+cyan = "#9A9A9A"
+blue = "#7A7A7A"
+magenta = "#8A8A8A"
+brown = "#353535"
+
+bright_red = "#555555"
+bright_yellow = "#777777"
+bright_green = "#666666"
+bright_cyan = "#AAAAAA"
+bright_blue = "#888888"
+bright_magenta = "#999999"

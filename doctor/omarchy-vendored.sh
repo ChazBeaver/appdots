@@ -55,17 +55,32 @@ for pair in "${PAIRS[@]}"; do
   fi
 done
 
-# The Mac's palettes are copies of the themes installed here. Report any
-# palette that no longer matches its Linux counterpart, and any Linux theme
-# with a palette that the Mac does not carry (informational).
+# The Mac's palettes are copies of the themes installed here: the user's
+# under ~/.config/omarchy/themes and Omarchy's own under $OMARCHY/themes
+# (the two places omarchy-theme-list reads). Report any palette that no
+# longer matches its Linux counterpart, and any installed theme with a
+# palette that the Mac does not carry (informational).
 MAC_THEMES="$APPDOTS_DIR/active/macos/.config/omarchy/themes"
-LINUX_THEMES="$HOME/.config/omarchy/themes"
+USER_THEMES="$HOME/.config/omarchy/themes"
+SYSTEM_THEMES="$OMARCHY/themes"
+
+# linux_palette <slug>: print the installed colors.toml for a slug, user first.
+linux_palette() {
+  local dir
+  for dir in "$USER_THEMES" "$SYSTEM_THEMES"; do
+    if [ -f "$dir/$1/colors.toml" ]; then
+      printf '%s\n' "$dir/$1/colors.toml"
+      return 0
+    fi
+  done
+  return 1
+}
+
 MISSING=0
-if [ -d "$MAC_THEMES" ] && [ -d "$LINUX_THEMES" ]; then
+if [ -d "$MAC_THEMES" ]; then
   for dir in "$MAC_THEMES"/*/; do
     slug="$(basename "$dir")"
-    linux="$LINUX_THEMES/$slug/colors.toml"
-    if [ ! -f "$linux" ]; then
+    if ! linux="$(linux_palette "$slug")"; then
       log_warn "Palette $slug is on the Mac but not installed here (kept as is)"
       continue
     fi
@@ -75,12 +90,17 @@ if [ -d "$MAC_THEMES" ] && [ -d "$LINUX_THEMES" ]; then
       DRIFT=1
     fi
   done
-  for dir in "$LINUX_THEMES"/*/; do
-    slug="$(basename "$dir")"
-    [ -f "$dir/colors.toml" ] || continue
-    [ -d "$MAC_THEMES/$slug" ] || MISSING=$((MISSING + 1))
+  for src in "$USER_THEMES" "$SYSTEM_THEMES"; do
+    [ -d "$src" ] || continue
+    for dir in "$src"/*/; do
+      slug="$(basename "$dir")"
+      [ -f "$dir/colors.toml" ] || continue
+      if [ ! -d "$MAC_THEMES/$slug" ]; then
+        log_info "Not carried for the Mac: $slug (add with: mkdir -p $MAC_THEMES/$slug && cp $dir/colors.toml $MAC_THEMES/$slug/)"
+        MISSING=$((MISSING + 1))
+      fi
+    done
   done
-  [ "$MISSING" -eq 0 ] || log_info "$MISSING installed theme(s) with a palette are not carried for the Mac (add with: mkdir -p $MAC_THEMES/<slug> && cp $LINUX_THEMES/<slug>/colors.toml $MAC_THEMES/<slug>/)"
 fi
 
 if [ "$DRIFT" -ne 0 ]; then
