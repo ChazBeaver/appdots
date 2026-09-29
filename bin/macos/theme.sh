@@ -30,7 +30,9 @@ IFS=$'\n\t'
 # Ghostty under Privacy & Security > Accessibility; until then the command
 # prints the manual shortcut instead.
 #
-# Requires bash 4+ (brew install bash) for the vendored resolver.
+# Requires bash 4+ (brew install bash) for the vendored resolver; this script
+# finds it explicitly instead of trusting PATH, since macOS's own /bin/bash
+# is 3.2 and is still findable as a bare `bash` on a stock shell.
 
 [ -n "${HOME:-}" ] || { printf '❌ HOME is not set\n' >&2; exit 1; }
 THEMES_DIR="$HOME/.config/omarchy/themes"
@@ -51,6 +53,22 @@ fi
 
 resolver="$(command -v omarchy-theme-color || true)"
 [ -n "$resolver" ] || die "omarchy-theme-color not on PATH; run appdots sync.sh"
+
+# The vendored resolver uses declare -A (bash 4+). macOS ships bash 3.2 as
+# /bin/bash for license reasons, and it is still the first `bash` on PATH on
+# a stock shell, so a bare `bash "$resolver"` silently runs the wrong one and
+# fails deep inside the script. Find an actual bash 4+ instead of trusting
+# PATH: check PATH first (works once Homebrew's shellenv puts its bash
+# ahead), then Homebrew's two install prefixes directly.
+find_bash4() {
+  local candidate
+  for candidate in "$(command -v bash || true)" /opt/homebrew/bin/bash /usr/local/bin/bash; do
+    [ -n "$candidate" ] && [ -x "$candidate" ] || continue
+    "$candidate" -c '(( BASH_VERSINFO[0] >= 4 ))' 2>/dev/null && { printf '%s' "$candidate"; return 0; }
+  done
+  return 1
+}
+resolver_bash="$(find_bash4)" || die "Need bash 4+ for the theme colors; run: brew install bash"
 
 theme_slugs() {
   [ -d "$THEMES_DIR" ] || return 0
@@ -97,7 +115,7 @@ render_templates() {
     [[ $value =~ ^#[0-9A-Fa-f]{6}$ ]] || continue
     printf 's|{{ %s }}|%s|g\n' "$key" "$value" >>"$sed_script"
     printf 's|{{ %s_strip }}|%s|g\n' "$key" "${value#\#}" >>"$sed_script"
-  done < <(bash "$resolver" --file "$colors" --all)
+  done < <("$resolver_bash" "$resolver" --file "$colors" --all)
 
   for tpl in "$TEMPLATES_DIR"/*.tpl; do
     [ -f "$tpl" ] || { rm -f "$sed_script"; die "No templates in $TEMPLATES_DIR; run appdots sync.sh"; }
