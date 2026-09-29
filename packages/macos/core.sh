@@ -4,9 +4,15 @@ set -euo pipefail
 # Cross-platform apps installed via Homebrew.
 
 BREW_FORMULAE=(
-  # --- Shell / CLI ---
+  # --- Shell / CLI (the zsh modules and bin/ scripts assume these exist) ---
   bash # 4+ for the vendored omarchy-theme-color used by bin/macos/theme.sh
+  starship
   zsh-autosuggestions
+  zsh-syntax-highlighting
+  fzf   # theme pick, fe/fda/fcd
+  bat   # fzf previews
+  tree  # fzf previews
+  neovim
   yazi
   yq
   ripgrep
@@ -31,6 +37,8 @@ BREW_FORMULAE=(
 )
 
 BREW_CASKS=(
+  ghostty    # config in active/shared/.config/ghostty
+  rectangle  # plist in active/macos/library/Preferences
   keepassxc
   nikitabobko/tap/aerospace # tiling WM, config in active/macos/.config/aerospace
   kitty

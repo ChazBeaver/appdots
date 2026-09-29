@@ -6,6 +6,19 @@
 ENV_FILE="$HOME/.dotfiles-env.sh"
 [ -r "$ENV_FILE" ] && source "$ENV_FILE"
 
+# --- macOS: put Homebrew on PATH before any module needs its tools ---
+# Login shells get this from ~/.zprofile via `brew shellenv`; this covers
+# non-login shells (Herdr panes, Neovim :terminal) and machines without it.
+if [ "$(uname -s)" = Darwin ] && [ -z "${HOMEBREW_PREFIX:-}" ]; then
+  for _brew in /opt/homebrew/bin/brew /usr/local/bin/brew; do
+    if [ -x "$_brew" ]; then
+      eval "$("$_brew" shellenv)"
+      break
+    fi
+  done
+  unset _brew
+fi
+
 # --- Set base directory (installed location, not repo location) ---
 # appdots install links this into place: ~/zsh_modules -> $APP_DOTS_DIR/active/shared/HOME/zsh/zsh_modules
 BASE_DIR="$HOME/zsh_modules"

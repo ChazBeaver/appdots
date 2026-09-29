@@ -200,12 +200,8 @@ cmd_pick() {
   local slugs slug
   slugs="$(theme_slugs)"
   [ -n "$slugs" ] || die "No themes under $THEMES_DIR; run appdots sync.sh"
-  if command -v fzf >/dev/null 2>&1; then
-    slug="$(printf '%s\n' "$slugs" | fzf --prompt='Theme > ' --height=40% --reverse)" || true
-  else
-    PS3='Theme > '
-    select slug in $slugs; do break; done
-  fi
+  command -v fzf >/dev/null 2>&1 || die "fzf not found; run: brew install fzf (or open a new terminal if just installed)"
+  slug="$(printf '%s\n' "$slugs" | fzf --prompt='Theme > ' --height=40% --reverse)" || true
   [ -n "${slug:-}" ] || exit 0
   cmd_set "$slug"
 }
