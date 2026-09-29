@@ -44,6 +44,11 @@ shell-integration-features = ssh-env
 macos-option-as-alt = left
 
 # Keyboard bindings
+# Font size: cmd+= / cmd+- are Ghostty defaults and reach it now that
+# Aerospace resizes windows in its own mode. cmd+0 (Ghostty's default reset)
+# is Aerospace workspace 10 and cmd+shift+0 moves a window there, so reset
+# lives on cmd+ctrl+0 instead.
+keybind = super+control+0=reset_font_size
 keybind = shift+insert=paste_from_clipboard
 keybind = control+insert=copy_to_clipboard
 # Send Shift+Enter as CSI-u so TUIs can distinguish it from Enter.

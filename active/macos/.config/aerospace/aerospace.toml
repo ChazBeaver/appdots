@@ -10,9 +10,10 @@
 # cmd-c / cmd-v / cmd-x are not bound here, so they stay native and cover
 # Omarchy's "universal copy/paste" (SUPER+C / SUPER+V).
 # CAUTION: AeroSpace hotkeys win over app shortcuts. cmd-1..9, cmd-s,
-# cmd-l, cmd-r, cmd-w, cmd-comma and cmd-minus/equal go to the window
-# manager, not the app. cmd-f is deliberately unbound so browsers keep
-# native find-in-page; fullscreen lives on cmd-ctrl-f. cmd-tab is reserved
+# cmd-l, cmd-r, cmd-w and cmd-comma go to the window manager, not the app.
+# cmd-f is deliberately unbound so browsers keep native find-in-page;
+# fullscreen lives on cmd-ctrl-f. Window resizing is a separate mode
+# (cmd-shift-r) so cmd-minus/equal reach the app (Ghostty font size, zoom). cmd-tab is reserved
 # by macOS and cannot be bound, so the SUPER+TAB workspace bindings below
 # will not fire.
 #
@@ -144,19 +145,9 @@ cmd-ctrl-right  = 'move right'
 cmd-ctrl-up     = 'move up'
 cmd-ctrl-down   = 'move down'
 
-# ---- Resize (SUPER+minus/equal; SHIFT = height; ALT = little; CTRL = a lot)
-cmd-minus            = 'resize width -100'
-cmd-equal            = 'resize width +100'
-cmd-shift-minus      = 'resize height -100'
-cmd-shift-equal      = 'resize height +100'
-cmd-alt-minus        = 'resize width -25'
-cmd-alt-equal        = 'resize width +25'
-cmd-shift-alt-minus  = 'resize height -25'
-cmd-shift-alt-equal  = 'resize height +25'
-cmd-ctrl-minus       = 'resize width -300'
-cmd-ctrl-equal       = 'resize width +300'
-cmd-ctrl-shift-minus = 'resize height -300'
-cmd-ctrl-shift-equal = 'resize height +300'
+# ---- Resize: lives in its own mode (see [mode.resize.binding] at the end)
+# so cmd-minus/equal stay with the app: Ghostty font size, browser zoom, etc.
+cmd-shift-r = 'mode resize'                                     # SUPER+SHIFT+R enter resize mode
 
 # ---- Workspaces (SUPER+N switch, SUPER+SHIFT+N move+follow, +ALT = silent) -
 cmd-1 = 'workspace 1'
@@ -242,3 +233,25 @@ cmd-shift-alt-left  = 'move-workspace-to-monitor left'          # SUPER+SHIFT+AL
 cmd-shift-alt-right = 'move-workspace-to-monitor right'         # SUPER+SHIFT+ALT+RIGHT
 cmd-shift-alt-up    = 'move-workspace-to-monitor up'            # SUPER+SHIFT+ALT+UP
 cmd-shift-alt-down  = 'move-workspace-to-monitor down'          # SUPER+SHIFT+ALT+DOWN
+
+# ---------------------------------------------------------------------------
+# Resize mode (cmd-shift-r). Same steps as before, without holding cmd:
+# minus/equal = width; SHIFT = height; ALT = little; CTRL = a lot.
+# esc or enter returns to the main mode.
+# ---------------------------------------------------------------------------
+[mode.resize.binding]
+minus            = 'resize width -100'
+equal            = 'resize width +100'
+shift-minus      = 'resize height -100'
+shift-equal      = 'resize height +100'
+alt-minus        = 'resize width -25'
+alt-equal        = 'resize width +25'
+shift-alt-minus  = 'resize height -25'
+shift-alt-equal  = 'resize height +25'
+ctrl-minus       = 'resize width -300'
+ctrl-equal       = 'resize width +300'
+ctrl-shift-minus = 'resize height -300'
+ctrl-shift-equal = 'resize height +300'
+b                = 'balance-sizes'
+esc              = 'mode main'
+enter            = 'mode main'
