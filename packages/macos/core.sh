@@ -9,7 +9,8 @@ BREW_FORMULAE=(
   starship
   zsh-autosuggestions
   zsh-syntax-highlighting
-  fzf   # theme pick, fe/fda/fcd
+  fzf   # theme pick, fe/fda/fcd, herdr-fzf
+  jq    # herdr-workspace, herdr-fzf (Omarchy's base manifest covers this on Linux)
   bat   # fzf previews
   tree  # fzf previews
   neovim
