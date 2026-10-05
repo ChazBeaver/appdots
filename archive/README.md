@@ -1,6 +1,9 @@
 # archive/
 
-Removal scripts for packages / apps you used to run. Committed as history.
+Reserved for removal scripts for packages/apps you used to run. There are
+currently no removal scripts in this directory; the tree below illustrates
+the naming convention, not existing commands. For current installation and
+maintenance commands, see [MANUAL.md](../MANUAL.md).
 
 ## When to add here
 

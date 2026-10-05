@@ -2,7 +2,13 @@
 
 A modular dotfiles system for managing application configurations across Linux and macOS.
 
-Pure Bash — no dependencies, no extra tools. Symlinks configs cleanly into `$HOME` and `~/.config/`, installs OS-appropriate packages, and keeps everything verifiable with a built-in doctor.
+Bash installers symlink configs into `$HOME` and `~/.config/`, install
+OS-appropriate packages, and check drift with a built-in doctor. Linux package
+setup targets Arch/Omarchy; macOS package setup uses Homebrew.
+
+For complete terminal examples, see the [manual operations guide](MANUAL.md)
+and [shell command reference](SHELL.md). They cover individual scripts,
+repairs, installed helpers, shell functions, aliases, and their prerequisites.
 
 ---
 
@@ -21,8 +27,8 @@ Pure Bash — no dependencies, no extra tools. Symlinks configs cleanly into `$H
 ### Fresh machine (first time)
 
 ```bash
-git clone <repo-url> ~/appdots
-cd ~/appdots
+git clone <repo-url> ~/Projects/home/appdots
+cd ~/Projects/home/appdots
 ./bootstrap.sh
 ```
 
@@ -58,15 +64,17 @@ Renames any real (non-symlink) files that sync would replace, appending `.bak`. 
 ./doctor.sh
 ```
 
-Runs four checks:
+Runs five checks:
 
 - **`doctor/default-shell.sh`** — verifies the account login shell is the installed zsh and directs shell drift to `./bootstrap.sh`
 - **`doctor/symlinks.sh`** — verifies every symlink exists and points correctly
 - **`doctor/packages.sh`** — compares installed packages against `packages/<os>/core.sh`, filtering out Omarchy base packages and sibling repo (hyprdots) declarations to avoid false positives
 - **`doctor/herdr-integrations.sh`** — verifies each Herdr agent integration declared in `integrations/herdr.sh` is installed and still at the reviewed version (see [Herdr agent integrations](#-herdr-agent-integrations))
+- **`doctor/omarchy-vendored.sh`** — on Linux, checks macOS theme templates, the color resolver, and palettes against the installed Omarchy files
 
 Exit code is non-zero if drift is detected. Run `./sync.sh` to fix symlink
-drift; run `./bootstrap.sh` to fix login-shell drift.
+drift. For login-shell drift, run the applicable `system/<os>/*default-shell.sh`
+script described in the [manual](MANUAL.md#packages-and-system-settings).
 
 ---
 
@@ -126,8 +134,9 @@ since there is no per-theme file to render them into.
 
 ```bash
 theme list                 # available themes, * marks the active one   (Neovim: <leader>tt)
-theme set <slug>           # render ghostty.conf and neovim.lua, activate
-theme pick                 # fzf picker (falls back to a menu); zsh alias: tt
+theme current              # active slug (fails if no theme has been set)
+theme set catppuccin        # render ghostty.conf and neovim.lua, activate
+theme pick                 # requires fzf; zsh alias: tt
 ```
 
 To add a theme for the Mac, copy its `colors.toml` from `~/.config/omarchy/themes/<slug>/`
@@ -154,7 +163,7 @@ script, so scripts that need the repo use the exported `APP_DOTS_DIR`.
 | `system/macos/20-apply-symbolic-hotkeys.sh` | Configure keyboard shortcuts |
 | `system/macos/30-dock.sh` | Dock layout and behavior |
 | `system/macos/40-login-items.sh` | Login items |
-| `system/macos/50-browser.sh` | Default browser |
+| `system/macos/50-browser.sh` | Placeholder: prints a notice; does not change the default browser |
 
 ---
 
@@ -229,8 +238,7 @@ When `./doctor.sh` reports a version mismatch or that herdr wants to upgrade:
 ### Installing an agent later
 
 If Claude Code or Codex was not on the machine when `bootstrap.sh` ran, the
-integration is skipped. After installing the agent, run either
-`./bootstrap.sh` again or the system script directly:
+integration is skipped. After installing the agent, run the system script directly:
 
 ```bash
 ./system/shared/20-herdr-integrations.sh
@@ -303,9 +311,13 @@ intentionally no longer callable.
 
 ## 🔄 Auto Git Pull
 
-Zsh loads `active/shared/HOME/zsh/zsh_modules/shared/personal-repos-pull.sh` on every new terminal session, which runs `git pull --rebase` on both appdots and hyprdots automatically.
+Zsh loads `shared/personal-repos-pull.sh` from its managed modules on each new
+terminal session, pulling appdots and wikinotes with `git pull --rebase`.
+On Linux it also loads `linux/hyprdots-pull.sh`, which pulls hyprdots. These
+scripts use the fixed paths under `~/Projects/home/`; they do not run sync.
 
-To disable, rename that file to `.sh.bak` and re-run `./sync.sh`.
+See [manual startup updates](MANUAL.md#startup-updates) for standalone runs
+and reversible disable/enable examples.
 
 ---
 
