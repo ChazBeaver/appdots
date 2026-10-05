@@ -5,7 +5,7 @@ IFS=$'\n\t'
 # Compare installed packages against packages/$OS/core.sh.
 #
 # Filters (linux):
-#   - Omarchy base manifest (/usr/share/omarchy/install/omarchy-base.packages,
+#   - Omarchy base and hardware/optional manifests (/usr/share/omarchy/install/,
 #     or the older ~/.local/share/omarchy location on pre-package installs)
 #   - Hard-coded arch-base essentials (kernel, firmware, microcode, bootloader, etc.)
 #   - Sibling repo: hyprdots's declared packages, IF hyprdots exists on this machine
@@ -16,7 +16,7 @@ IFS=$'\n\t'
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]:-${(%):-%N}}")" &>/dev/null && pwd)"
 APPDOTS_DIR="$(cd -- "$SCRIPT_DIR/.." &>/dev/null && pwd)"
-ENV_FILE="$HOME/.dotfiles-env.sh"
+ENV_FILE="${APPDOTS_ENV_FILE:-$HOME/.dotfiles-env.sh}"
 
 # shellcheck source=../lib/log.sh
 source "$APPDOTS_DIR/lib/log.sh"
@@ -42,6 +42,7 @@ ARCH_ESSENTIALS=(
   webkit2gtk webkit2gtk-4.1
   crypto++
   git
+  omarchy
   omarchy-keyring
 )
 
@@ -100,10 +101,11 @@ if [ "$OS" != "linux" ]; then
   declared_formulae="$(awk '/^BREW_FORMULAE=\(/{f=1;next}/^\)/{f=0;next}f{sub(/#.*/,"");gsub(/[[:space:]]/,"");if(length($0)>0)print}' "$pkg_script" | sort -u)"
   declared_casks="$(awk '/^BREW_CASKS=\(/{f=1;next}/^\)/{f=0;next}f{sub(/#.*/,"");gsub(/[[:space:]]/,"");if(length($0)>0)print}' "$pkg_script" | sort -u)"
 
-  installed_formulae="$(brew leaves 2>/dev/null | sort -u)"
+  installed_formulae="$(brew list --formula 2>/dev/null | sort -u)"
+  leaf_formulae="$(brew leaves 2>/dev/null | sort -u)"
   installed_casks="$(brew list --cask 2>/dev/null | sort -u)"
 
-  extra_f="$(comm -23 <(echo "$installed_formulae") <(echo "$declared_formulae"))"
+  extra_f="$(comm -23 <(echo "$leaf_formulae") <(echo "$declared_formulae"))"
   missing_f="$(comm -23 <(echo "$declared_formulae") <(echo "$installed_formulae"))"
   extra_c="$(comm -23 <(echo "$installed_casks") <(echo "$declared_casks"))"
   missing_c="$(comm -23 <(echo "$declared_casks") <(echo "$installed_casks"))"
@@ -132,7 +134,7 @@ appdots_declared="$(extract_packages_from_script "$pkg_script")"
 # under /usr/share; accept whichever manifest exists.
 omarchy_base_file=""
 for candidate in \
-  /usr/share/omarchy/install/omarchy-base.packages \
+  "${OMARCHY_PATH:-/usr/share/omarchy}/install/omarchy-base.packages" \
   "$HOME/.local/share/omarchy/install/omarchy-base.packages"; do
   if [ -f "$candidate" ]; then
     omarchy_base_file="$candidate"
@@ -144,31 +146,45 @@ if [ -n "$omarchy_base_file" ]; then
 else
   log_warn "No Omarchy base manifest found — drift report won't filter Omarchy's packages"
 fi
-omarchy_base="$(extract_omarchy_base "$omarchy_base_file")"
+omarchy_base="$(
+  extract_omarchy_base "$omarchy_base_file"
+  if [ -n "$omarchy_base_file" ]; then
+    extract_omarchy_base "$(dirname "$omarchy_base_file")/omarchy-other.packages"
+  fi
+)"
 
 arch_essentials="$(printf '%s\n' "${ARCH_ESSENTIALS[@]}" | sort -u)"
 
 sibling_dir="$(resolve_sibling_dir)"
 sibling_declared=""
 if [ -n "$sibling_dir" ]; then
-  sibling_script="$sibling_dir/packages/linux/core.sh"
-  if [ -f "$sibling_script" ]; then
-    sibling_declared="$(extract_packages_from_script "$sibling_script")"
-    log_info "Sibling repo: $sibling_dir (filtering its declarations)"
-  else
-    log_info "Sibling repo at $sibling_dir but no packages/linux/core.sh — skipping sibling filter"
-  fi
+  sibling_declared="$(
+    if [ -f "$sibling_dir/packages/linux/pacman.txt" ] || [ -f "$sibling_dir/packages/linux/aur.txt" ]; then
+      extract_omarchy_base "$sibling_dir/packages/linux/pacman.txt"
+      extract_omarchy_base "$sibling_dir/packages/linux/aur.txt"
+    else
+      # Compatibility with older checkouts that declared Bash arrays.
+      extract_packages_from_script "$sibling_dir/packages/linux/core.sh"
+    fi
+    if [ -f "$sibling_dir/config/plugin-requirements.json" ]; then
+      jq -r '.plugins[] | .packages[]? | .name' "$sibling_dir/config/plugin-requirements.json"
+    fi
+  )"
+  log_info "Sibling repo: $sibling_dir (filtering package and plugin declarations)"
 else
   log_info "No sibling repo (hyprdots) on this machine — drift report won't filter its packages"
 fi
 
-installed="$(pacman -Qqett 2>/dev/null | sort -u)"
+# Presence includes dependencies and packages required by other packages.
+# Keep the narrower top-level set only for detecting undeclared additions.
+installed="$(pacman -Qq 2>/dev/null | sort -u)"
+explicit_leaves="$(pacman -Qqett 2>/dev/null | sort -u)"
 
 known="$(printf '%s\n%s\n%s\n%s\n' \
   "$appdots_declared" "$omarchy_base" "$arch_essentials" "$sibling_declared" \
   | sort -u | grep -v '^$')"
 
-extra="$(comm -23 <(echo "$installed") <(echo "$known"))"
+extra="$(comm -23 <(echo "$explicit_leaves") <(echo "$known"))"
 missing="$(comm -23 <(echo "$appdots_declared") <(echo "$installed"))"
 
 drift=0
@@ -183,6 +199,7 @@ fi
 if [ -n "$missing" ]; then
   log_warn "Declared by appdots but not installed:"
   echo "$missing" | sed 's/^/  - /'
+  log_info "Review packages/linux/core.sh; install only the packages you intend to use."
   echo
   drift=1
 fi

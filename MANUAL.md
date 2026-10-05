@@ -46,12 +46,24 @@ Run the aggregate doctor or any check individually:
 | `bash doctor/symlinks.sh` | Shared and OS-specific configuration links. |
 | `bash doctor/packages.sh` | Declared versus installed packages. |
 | `bash doctor/herdr-integrations.sh` | Installed agent hooks versus reviewed versions. |
-| `bash doctor/omarchy-vendored.sh` | Resolver, templates, and Mac palettes versus Linux sources; skips on macOS. |
+| `bash doctor/omarchy-vendored.sh` | Render every Mac palette for Ghostty/Neovim; on Linux also detect missing counterparts. Does not compare colors byte for byte. |
 
-Treat nonzero doctor status as a finding to investigate. Package reports can
-include ownership/parser drift; inspect the manifests and package-manager
-output before installing or deleting anything. There is no checked-in
-automated test suite in this repository.
+Treat nonzero doctor status as a finding to investigate. Missing packages
+mean a declaration is unmet, not necessarily that normal desktop use is
+broken. Presence checks include packages installed as dependencies; extra
+package checks use the narrower top-level package set and filter Omarchy and
+Hyprdots ownership. Review the declared intent before installing anything.
+
+Run the regression fixtures without installing packages or changing the desktop:
+
+```bash
+bash tests/packages.sh
+bash tests/themes.sh
+```
+
+The package suite checks Linux ownership/presence and Homebrew non-leaf
+formulae using stub package managers. The theme suite checks missing coverage,
+intentional palette differences, failed rendering, and operation without Omarchy.
 
 ## Back up and restore
 
@@ -93,6 +105,50 @@ intent. Each command below is an independent operation from the repo root.
 | Linux | `bash system/linux/10-default-shell.sh` | Select installed Zsh with `chsh`; may update `/etc/shells` via sudo. Log out/in afterward. |
 | macOS | `bash system/macos/00-default-shell.sh` | Set the account shell to installed Zsh. |
 | Both | `APP_DOTS_DIR="$PWD" bash system/shared/20-herdr-integrations.sh` | Install missing integrations for installed agents; requires Herdr. |
+
+### Neovim tools: choose by the files you edit
+
+These declared packages add editor features; none is required to run the
+desktop or edit plain text. The LSP config enables only installed servers.
+Formatting runs on demand with `<leader>cf` or `gq`, not automatically on save.
+
+| Linux package | What the current configuration uses it for |
+| --- | --- |
+| `bash-language-server` | Bash completion, diagnostics, and navigation. |
+| `shfmt` | Shell script formatting. |
+| `lua-language-server` | Lua/Neovim config completion, diagnostics, and navigation. |
+| `stylua` | Lua formatting. |
+| `yaml-language-server` | YAML language assistance and validation. |
+| `prettier` | YAML, JSON, Markdown, and JavaScript formatting. |
+| `pyright` | Python type diagnostics, completion, and navigation. |
+| `ruff` | Python formatting and import organization. Ruff linting is not enabled here. |
+| `terraform-ls` | Terraform language assistance. Formatting uses the separate `terraform` CLI. |
+
+To inspect a reported dependency without installing it:
+
+```bash
+pacman -Q shfmt                     # installed version; exits nonzero if absent
+pacman -Si shfmt                    # repository metadata and dependencies
+pacman -Sp --needed shfmt           # planned package URLs, without downloading
+```
+
+`terraform-ls` is declared through the AUR; inspect its current build recipe
+and sources before choosing it. If a tool is intentionally unwanted, remove
+its declaration from `packages/linux/core.sh` (or the corresponding macOS
+array) and rerun `bash doctor/packages.sh`. That changes future installation
+intent; it does not uninstall anything.
+
+After installing a chosen server, open a file of its language in Neovim and
+run `:lua =vim.lsp.get_clients({ bufnr = 0 })` to see attached clients.
+Use `:ConformInfo` to inspect formatter availability, then `<leader>cf` to
+format the buffer and review the result before saving.
+
+The server settings disable selected download/telemetry features; they are
+not a network sandbox. Tools run with your user permissions. In particular,
+[Prettier supports executable JavaScript/TypeScript project configuration](https://prettier.io/docs/configuration),
+so review an unfamiliar checkout before formatting it.
+
+### System settings and integrations
 
 All other macOS system scripts have independent examples and effects in
 [system/macos/README.md](system/macos/README.md). Choose those scripts to
@@ -228,8 +284,12 @@ bash doctor/omarchy-vendored.sh
 ```
 
 After transferring the reviewed repository changes to the Mac, run sync and
-`theme set blue-sky`. To refresh the resolver/templates on Linux, review the
-diffs and use the exact copy commands printed by `doctor/omarchy-vendored.sh`.
+`theme set blue-sky`. Preserve working Mac palettes; Linux color edits are not
+automatically adopted. Doctor reports missing counterparts and unusable
+Ghostty/Neovim output, and prints a copy command for each missing palette.
+For a stock theme, copy from `/usr/share/omarchy/themes/<slug>/colors.toml`
+instead. Changes to the upstream resolver/templates alone do not count as
+drift; update those deliberately only when needed for palette compatibility.
 
 ## Startup updates
 

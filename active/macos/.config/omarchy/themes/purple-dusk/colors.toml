@@ -1,0 +1,32 @@
+# Indigo dusk, lavender mountains, rose clouds and warm city lights.
+mode = "dark"
+
+accent = "#b6a0e8"
+selection = "#444064"
+muted = "#a098b8"
+
+background = "#1d1b30"
+dark_background = "#161525"
+darker_background = "#11101d"
+lighter_background = "#2b2944"
+
+foreground = "#ece5f2"
+dark_foreground = "#bdb1cf"
+light_foreground = "#f4edf8"
+bright_foreground = "#fcf6ff"
+
+red = "#ee929e"
+yellow = "#edc48b"
+orange = "#f0a17f"
+green = "#a5bba4"
+cyan = "#97c4db"
+blue = "#8fabe3"
+magenta = "#d89eca"
+brown = "#b49095"
+
+bright_red = "#ffaab5"
+bright_yellow = "#ffdfac"
+bright_green = "#bfd2bc"
+bright_cyan = "#b5ddef"
+bright_blue = "#abc4f5"
+bright_magenta = "#eeb9e0"

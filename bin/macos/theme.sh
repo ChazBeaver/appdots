@@ -15,15 +15,15 @@ IFS=$'\n\t'
 # Themes are plain palette files under active/macos/.config/omarchy/themes/;
 # nothing is downloaded. Palette resolution is Omarchy's own
 # omarchy-theme-color, vendored verbatim in bin/macos/; on Linux
-# doctor/omarchy-vendored.sh flags drift from the original and from the
-# installed Linux themes. Only six-digit hex colours are rendered into the
-# templates, so a palette cannot inject anything into the generated files.
+# doctor/omarchy-vendored.sh checks palette coverage and renderability,
+# allowing intentional differences from Linux. Only six-digit hex colours
+# are rendered, so palette values cannot inject code into generated files.
 #
 # Usage:
 #   theme list              themes available (* marks the active one)
 #   theme current           print the active slug
 #   theme set <slug>        render and activate a theme
-#   theme pick              choose with fzf (or a menu) and set (zsh alias: tt)
+#   theme pick              choose with fzf and set (zsh alias: tt)
 #
 # After a set, Ghostty's config is reloaded by sending its reload keystroke
 # through System Events when run inside Ghostty. macOS asks once to allow
@@ -36,6 +36,17 @@ IFS=$'\n\t'
 #
 # Herdr follows along automatically (its config already sets theme.name =
 # "terminal"); see notify_herdr below for the one nudge it needs.
+
+# Follow the installed ~/.local/bin/theme symlink to the repository library.
+theme_script="${BASH_SOURCE[0]}"
+while [ -L "$theme_script" ]; do
+  theme_dir="$(cd -- "$(dirname -- "$theme_script")" && pwd)"
+  theme_script="$(readlink "$theme_script")"
+  case "$theme_script" in /*) ;; *) theme_script="$theme_dir/$theme_script" ;; esac
+done
+theme_repo="$(cd -- "$(dirname -- "$theme_script")/../.." && pwd)"
+source "$theme_repo/lib/log.sh"
+source "$theme_repo/lib/theme.sh"
 
 [ -n "${HOME:-}" ] || { printf '❌ HOME is not set\n' >&2; exit 1; }
 THEMES_DIR="$HOME/.config/omarchy/themes"
@@ -63,14 +74,6 @@ resolver="$(command -v omarchy-theme-color || true)"
 # fails deep inside the script. Find an actual bash 4+ instead of trusting
 # PATH: check PATH first (works once Homebrew's shellenv puts its bash
 # ahead), then Homebrew's two install prefixes directly.
-find_bash4() {
-  local candidate
-  for candidate in "$(command -v bash || true)" /opt/homebrew/bin/bash /usr/local/bin/bash; do
-    [ -n "$candidate" ] && [ -x "$candidate" ] || continue
-    "$candidate" -c '(( BASH_VERSINFO[0] >= 4 ))' 2>/dev/null && { printf '%s' "$candidate"; return 0; }
-  done
-  return 1
-}
 resolver_bash="$(find_bash4)" || die "Need bash 4+ for the theme colors; run: brew install bash"
 
 theme_slugs() {
@@ -102,39 +105,9 @@ cmd_current() {
   printf '%s\n' "$cur"
 }
 
-# Render every template in TEMPLATES_DIR with the palette's resolved colours.
-render_templates() {
-  local colors="$1" out_dir="$2" sed_script key value tpl name
-  sed_script="$(mktemp)"
-
-  # omarchy-theme-color prints "key<TAB>value" for the resolved palette,
-  # including aliases and derived shades. Run it through bash explicitly so
-  # macOS's /bin/bash 3.2 is never used for it. On top of the resolver's own
-  # charset check, only six-digit hex colours are offered to the templates:
-  # a hex value cannot break out of a Lua string in neovim.lua or add a line
-  # to ghostty.conf, and colours are all the two templates take.
-  while IFS=$'\t' read -r key value; do
-    [[ $key =~ ^[A-Za-z0-9_]+$ ]] || continue
-    [[ $value =~ ^#[0-9A-Fa-f]{6}$ ]] || continue
-    printf 's|{{ %s }}|%s|g\n' "$key" "$value" >>"$sed_script"
-    printf 's|{{ %s_strip }}|%s|g\n' "$key" "${value#\#}" >>"$sed_script"
-  done < <("$resolver_bash" "$resolver" --file "$colors" --all)
-
-  for tpl in "$TEMPLATES_DIR"/*.tpl; do
-    [ -f "$tpl" ] || { rm -f "$sed_script"; die "No templates in $TEMPLATES_DIR; run appdots sync.sh"; }
-    name="$(basename "$tpl" .tpl)"
-    sed -f "$sed_script" "$tpl" >"$out_dir/$name"
-    if grep -q '{{ ' "$out_dir/$name"; then
-      rm -f "$sed_script"
-      die "Unrendered placeholder in $name: $(grep -o '{{ [^}]* }}' "$out_dir/$name" | head -1)"
-    fi
-  done
-  rm -f "$sed_script"
-}
-
 # Herdr's own "terminal" theme (see ~/.config/herdr/config.toml [theme]
 # name = "terminal") already follows the host terminal's live ANSI palette,
-# which is exactly what render_templates just wrote into Ghostty's config.
+# which is exactly what render_theme_templates just wrote into Ghostty's config.
 # Herdr only re-reads those colors on a resize or SIGWINCH though (its own
 # docs: https://herdr.dev, "Theme" section), so nudge the attached client
 # after every set. Walks the process ancestry to find it, since the socket
@@ -183,7 +156,7 @@ cmd_set() {
   rm -rf "$NEXT_DIR"
   mkdir -p "$NEXT_DIR"
   cp "$colors" "$NEXT_DIR/colors.toml"
-  render_templates "$NEXT_DIR/colors.toml" "$NEXT_DIR"
+  render_theme_templates "$NEXT_DIR/colors.toml" "$TEMPLATES_DIR" "$NEXT_DIR" "$resolver" "$resolver_bash"
 
   # Neovim watches the mtime of neovim.lua and re-applies on the next focus;
   # Ghostty reads ghostty.conf on config reload.

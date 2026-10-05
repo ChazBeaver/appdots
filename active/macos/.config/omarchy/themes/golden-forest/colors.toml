@@ -1,0 +1,32 @@
+# Evergreen shade, mossy grass, pale golden sunbeams, bark, and forest mist.
+mode = "dark"
+
+accent = "#d5c47d"
+selection = "#405447"
+muted = "#92a092"
+
+background = "#1b2623"
+dark_background = "#141d1b"
+darker_background = "#0e1514"
+lighter_background = "#293932"
+
+foreground = "#e8e8cf"
+dark_foreground = "#b3b9a0"
+light_foreground = "#f2f0da"
+bright_foreground = "#fbf7e4"
+
+red = "#ca9280"
+yellow = "#dbc986"
+orange = "#cfac79"
+green = "#a5bd7a"
+cyan = "#86b7a0"
+blue = "#92b1b8"
+magenta = "#b3a0b4"
+brown = "#b09c7b"
+
+bright_red = "#dfab97"
+bright_yellow = "#eee1a6"
+bright_green = "#bfd493"
+bright_cyan = "#a6cdb4"
+bright_blue = "#b0cad0"
+bright_magenta = "#cdbacf"

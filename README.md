@@ -68,9 +68,9 @@ Runs five checks:
 
 - **`doctor/default-shell.sh`** — verifies the account login shell is the installed zsh and directs shell drift to `./bootstrap.sh`
 - **`doctor/symlinks.sh`** — verifies every symlink exists and points correctly
-- **`doctor/packages.sh`** — compares installed packages against `packages/<os>/core.sh`, filtering out Omarchy base packages and sibling repo (hyprdots) declarations to avoid false positives
+- **`doctor/packages.sh`** — checks declarations against all installed packages, and checks undeclared top-level packages separately. Omarchy base/hardware manifests and Hyprdots package/plugin declarations establish ownership.
 - **`doctor/herdr-integrations.sh`** — verifies each Herdr agent integration declared in `integrations/herdr.sh` is installed and still at the reviewed version (see [Herdr agent integrations](#-herdr-agent-integrations))
-- **`doctor/omarchy-vendored.sh`** — on Linux, checks macOS theme templates, the color resolver, and palettes against the installed Omarchy files
+- **`doctor/omarchy-vendored.sh`** — verifies every stored Mac palette renders for Ghostty and Neovim; on Linux, also checks that every installed Linux palette has a Mac counterpart
 
 Exit code is non-zero if drift is detected. Run `./sync.sh` to fix symlink
 drift. For login-shell drift, run the applicable `system/<os>/*default-shell.sh`
@@ -130,7 +130,7 @@ since there is no per-theme file to render them into.
 | Palettes | `active/macos/.config/omarchy/themes/<slug>/colors.toml` | one file per theme, copied from the theme installed on Linux |
 | Templates | `active/macos/.config/omarchy/themed/*.tpl` | verbatim copies of Omarchy's `ghostty.conf.tpl` and `neovim.lua.tpl` |
 | Palette resolver | `bin/macos/omarchy-theme-color.sh` | verbatim copy of Omarchy's; needs Homebrew `bash` |
-| Drift check | `doctor/omarchy-vendored.sh` | on Linux, compares the copies and palettes against what is installed |
+| Drift check | `doctor/omarchy-vendored.sh` | missing Mac counterparts or palettes/templates that cannot render both apps; intentional color differences are allowed |
 
 ```bash
 theme list                 # available themes, * marks the active one   (Neovim: <leader>tt)
@@ -145,6 +145,13 @@ six-digit hex colours are rendered, so a palette cannot inject anything into
 the generated files. After a set, Ghostty's config is reloaded through System Events when run
 inside Ghostty (macOS asks once to allow Ghostty under Accessibility);
 Neovim re-applies immediately from `<leader>tt`, or on the next focus.
+
+Every installed Linux theme with `colors.toml` should have a Mac counterpart,
+including stock themes under `/usr/share/omarchy/themes`. Existing working
+Mac palettes can retain their own colors. Doctor checks coverage and renders
+both configs with the same code as `theme set`; it does not require byte-for-byte
+matches with Linux palettes, resolver, or templates. It also checks stored
+palettes on a Mac without Omarchy installed.
 
 ### system/
 

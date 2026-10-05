@@ -1,0 +1,32 @@
+# Forest charcoal, orange flames, pale wood, sage foliage, and gray smoke.
+mode = "dark"
+
+accent = "#efa65e"
+selection = "#414a3e"
+muted = "#999c8e"
+
+background = "#1c201c"
+dark_background = "#151915"
+darker_background = "#101310"
+lighter_background = "#2b312a"
+
+foreground = "#e9dfc9"
+dark_foreground = "#bbb39f"
+light_foreground = "#f2e8d2"
+bright_foreground = "#fff2d8"
+
+red = "#d78c70"
+yellow = "#e6c77f"
+orange = "#efa65e"
+green = "#a6b37d"
+cyan = "#9aafa0"
+blue = "#9faab2"
+magenta = "#b9a0ab"
+brown = "#bca07c"
+
+bright_red = "#ecaa88"
+bright_yellow = "#f5dfa3"
+bright_green = "#bfca97"
+bright_cyan = "#b7c9b6"
+bright_blue = "#bac3c8"
+bright_magenta = "#d0b9c0"
