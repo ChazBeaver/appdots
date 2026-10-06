@@ -15,6 +15,7 @@ PACMAN_PKGS=(
   yq
   python-virtualenv
   tuicr
+  opencode
 
   # --- Fonts ---
   ttf-firacode-nerd
@@ -33,22 +34,11 @@ PACMAN_PKGS=(
   ghostty
   herdr
 
-  # --- Neovim language servers and formatters (see nvim lua/plugins/lsp.lua, conform.lua) ---
-  lua-language-server
-  bash-language-server
-  yaml-language-server
-  pyright
-  stylua
-  shfmt
-  prettier
-  ruff
+  # Neovim uses native editing and syntax plugins; no LSP/formatter packages.
 )
 
 AUR_PKGS=(
-  cbonsai-git
-  discordo-git
-  opencode
-  terraform-ls
+  # No Appdots AUR packages; Hyprdots owns desktop plugin requirements.
 )
 
 failures=()
@@ -88,23 +78,25 @@ for pkg in "${PACMAN_PKGS[@]}"; do
   fi
 done
 
-echo
-echo "==> Ensuring AUR helper (yay)"
-install_yay
+if (( ${#AUR_PKGS[@]} )); then
+  echo
+  echo "==> Ensuring AUR helper (yay)"
+  install_yay
 
-echo
-echo "==> Installing AUR packages"
-for pkg in "${AUR_PKGS[@]}"; do
-  if is_installed "$pkg"; then
-    echo "  ✓ Already installed: $pkg"
-  else
-    echo "  + Installing (AUR): $pkg"
-    if ! yay -S --needed --noconfirm "$pkg"; then
-      echo "  ✗ Failed: $pkg"
-      failures+=("$pkg")
+  echo
+  echo "==> Installing AUR packages"
+  for pkg in "${AUR_PKGS[@]}"; do
+    if is_installed "$pkg"; then
+      echo "  ✓ Already installed: $pkg"
+    else
+      echo "  + Installing (AUR): $pkg"
+      if ! yay -S --needed --noconfirm "$pkg"; then
+        echo "  ✗ Failed: $pkg"
+        failures+=("$pkg")
+      fi
     fi
-  fi
-done
+  done
+fi
 
 echo
 if (( ${#failures[@]} )); then

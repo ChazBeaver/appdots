@@ -22,19 +22,7 @@ BREW_FORMULAE=(
   cava
   cmatrix
 
-  # --- Fun ---
-  cbonsai
-
-  # --- Neovim language servers and formatters (see nvim lua/plugins/lsp.lua, conform.lua) ---
-  lua-language-server
-  bash-language-server
-  yaml-language-server
-  terraform-ls
-  pyright
-  stylua
-  shfmt
-  prettier
-  ruff
+  # Neovim uses native editing and syntax plugins; no LSP/formatter packages.
 )
 
 BREW_CASKS=(

@@ -1,0 +1,18 @@
+# macOS-only Ghostty overrides. Ghostty loads ~/.config/ghostty/config on
+# every platform, then on macOS also loads this file on top (see the comment
+# at the top of active/shared/.config/ghostty/config). Deliberately does NOT
+# repeat the `config-file = ...` theme-include line from that file: doing so
+# would make Ghostty load the same path twice and refuse it with "cycle
+# detected".
+
+# Ghostty hardcodes a macOS-only default ("natural text editing" keybinds,
+# see loadDefaultFiles in upstream src/config/Config.zig) that sends
+# Alt+Left/Right as ESC b / ESC f (legacy word-navigation) instead of the
+# normal fixterm Alt+Arrow CSI sequence, so herdr's previous_tab/next_tab
+# keys (alt+left/alt+right, see active/shared/.config/herdr/config.toml)
+# never see the keystroke. Alt+Up/Down has no such default, so it already
+# reaches herdr untouched. Ghostty's own upstream comment names `unbind` as
+# the way back to fixterm encoding, so use that rather than guessing at the
+# raw CSI bytes ourselves.
+keybind = alt+left=unbind
+keybind = alt+right=unbind

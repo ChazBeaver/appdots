@@ -100,53 +100,50 @@ intent. Each command below is an independent operation from the repo root.
 
 | Platform | Example | Effect/prerequisite |
 | --- | --- | --- |
-| Arch Linux | `bash packages/linux/core.sh` | Install declared pacman/AUR packages, bootstrapping yay if absent; requires sudo and network. |
+| Arch Linux | `bash packages/linux/core.sh` | Install declared packages; bootstraps yay only when the AUR list is nonempty and yay is absent. Requires sudo and network. |
 | macOS | `bash packages/macos/core.sh` | Install/update Homebrew and declared formulae/casks; inspect individual failures even if the script completes. |
 | Linux | `bash system/linux/10-default-shell.sh` | Select installed Zsh with `chsh`; may update `/etc/shells` via sudo. Log out/in afterward. |
 | macOS | `bash system/macos/00-default-shell.sh` | Set the account shell to installed Zsh. |
 | Both | `APP_DOTS_DIR="$PWD" bash system/shared/20-herdr-integrations.sh` | Install missing integrations for installed agents; requires Herdr. |
 
-### Neovim tools: choose by the files you edit
+### Neovim without language servers
 
-These declared packages add editor features; none is required to run the
-desktop or edit plain text. The LSP config enables only installed servers.
-Formatting runs on demand with `<leader>cf` or `gq`, not automatically on save.
+Appdots deliberately does not install external language servers or formatters.
+The `nvim-lspconfig` and `conform.nvim` integrations are also absent. Neovim
+still provides normal editing, search, syntax highlighting, and the remaining
+configured plugins. Use native `=` for indentation and `gq` for text wrapping;
+`<leader>cf` and `:ConformInfo` are not configured.
 
-| Linux package | What the current configuration uses it for |
-| --- | --- |
-| `bash-language-server` | Bash completion, diagnostics, and navigation. |
-| `shfmt` | Shell script formatting. |
-| `lua-language-server` | Lua/Neovim config completion, diagnostics, and navigation. |
-| `stylua` | Lua formatting. |
-| `yaml-language-server` | YAML language assistance and validation. |
-| `prettier` | YAML, JSON, Markdown, and JavaScript formatting. |
-| `pyright` | Python type diagnostics, completion, and navigation. |
-| `ruff` | Python formatting and import organization. Ruff linting is not enabled here. |
-| `terraform-ls` | Terraform language assistance. Formatting uses the separate `terraform` CLI. |
+The omitted tools are `bash-language-server`, `lua-language-server`,
+`yaml-language-server`, `terraform-ls`, `pyright`, `stylua`, `shfmt`, `prettier`,
+and `ruff`. They are not prerequisites for Neovim, the desktop, or running
+Python, shell, Lua, or Terraform programs. Omarchy's packaged editor/runtime
+remains owned by Omarchy.
 
-To inspect a reported dependency without installing it:
+On an existing machine, `:Lazy` shows installed editor plugins. After reviewing
+its obsolete plugin list, `:Lazy clean` removes plugins no longer declared;
+it can remove more than the two integrations above, so inspect the list first.
+
+Prefer configured binary package repositories over the AUR. `opencode` is
+listed under pacman packages because it is available in Arch's `extra` repo.
+Appdots currently declares no AUR packages. Hyprdots separately owns the
+AI Usage Bar and Meteobar dependencies used by its desktop widgets.
+
+To inspect package status and dependencies without installing anything:
 
 ```bash
-pacman -Q shfmt                     # installed version; exits nonzero if absent
-pacman -Si shfmt                    # repository metadata and dependencies
-pacman -Sp --needed shfmt           # planned package URLs, without downloading
+pacman -Q opencode                  # installed version
+pacman -Qi opencode                 # installed metadata, required-by, size
+pacman -Si opencode                 # available repository builds
+pacman -Qm                         # packages absent from configured repositories
+pacman -Qdt                        # dependency packages with no required/optional users
 ```
 
-`terraform-ls` is declared through the AUR; inspect its current build recipe
-and sources before choosing it. If a tool is intentionally unwanted, remove
-its declaration from `packages/linux/core.sh` (or the corresponding macOS
-array) and rerun `bash doctor/packages.sh`. That changes future installation
-intent; it does not uninstall anything.
-
-After installing a chosen server, open a file of its language in Neovim and
-run `:lua =vim.lsp.get_clients({ bufnr = 0 })` to see attached clients.
-Use `:ConformInfo` to inspect formatter availability, then `<leader>cf` to
-format the buffer and review the result before saving.
-
-The server settings disable selected download/telemetry features; they are
-not a network sandbox. Tools run with your user permissions. In particular,
-[Prettier supports executable JavaScript/TypeScript project configuration](https://prettier.io/docs/configuration),
-so review an unfamiliar checkout before formatting it.
+`pacman -Qm` means foreign to the current repositories, not proof of AUR
+origin. `pacman -Qdt` is a review list, not an automatic removal command.
+A package being unused by pacman does not rule out a shell script or plugin
+using its executable. Review Omarchy's manifests and repository declarations
+before removing anything.
 
 ### System settings and integrations
 
