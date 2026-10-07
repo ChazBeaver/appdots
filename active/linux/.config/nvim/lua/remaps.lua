@@ -183,7 +183,10 @@ vim.keymap.set("n", "<leader>l", vim.cmd.Lazy,
 -- <Esc> in normal mode clears search highlighting. Neovim's default key for
 -- this is <C-l>, which the window navigation maps above take over.
 vim.keymap.set("n", "<Esc>", "<cmd>nohlsearch<CR>", { desc = "Clear search highlight" })
- 
+
+-- <leader>nh also clears search highlighting (same as :nohlsearch)
+vim.keymap.set("n", "<leader>nh", "<cmd>nohlsearch<CR>", { desc = "Clear search highlight" })
+
 -- Toggle Relative Numbers
 vim.keymap.set("n", "<leader>rnu", function()
   vim.cmd("set rnu!")
