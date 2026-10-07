@@ -30,7 +30,6 @@ PACMAN_PKGS=(
   cmatrix
 
   # --- Terminals ---
-  kitty
   ghostty
   herdr
 

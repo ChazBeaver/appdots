@@ -30,7 +30,6 @@ BREW_CASKS=(
   rectangle  # plist in active/macos/library/Preferences
   keepassxc
   nikitabobko/tap/aerospace # tiling WM, config in active/macos/.config/aerospace
-  kitty
   libreoffice
   font-fira-code-nerd-font
 )
