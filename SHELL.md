@@ -35,8 +35,13 @@ gfh push                   # search Git help
 gfh --list                 # printable Git guide
 ```
 
-In `fn`, Enter inserts a command; Ctrl-E shows its definition; `?` toggles
-help. Inspect the resulting prompt and add arguments before executing it.
+In `fn` and `gfh`, Ctrl-E prints an example and Ctrl-F shows the function
+definition. Every example explains when to use the command, gives a
+concrete invocation, and describes its effect. `fn` lists registered public
+functions from appdots' managed Zsh modules; it skips system functions and
+functions defined in other files. Neither key runs the selected function.
+Enter still inserts its name into the prompt; add arguments before executing
+it. `?` toggles detailed help.
 Former names in the README are searchable metadata, not callable aliases.
 
 ## Navigation, files, and applications
@@ -64,9 +69,9 @@ or installed first; `mkcd` and `notes` create their own target directories.
 | `cam` or `cam overlay` | Linux: call external `webcam-launch` in overlay mode; requires that helper, which this repo does not ship. |
 | `edit-ghostty` | macOS: edit `~/Library/Application Support/com.mitchellh.ghostty/config`; this is a legacy path, while the managed config is `~/.config/ghostty/config`. Use `nvim ~/.config/ghostty/config` for the managed file. |
 
-If an fzf preview is hidden, press `?`. Appdots' generic Ctrl-Y clipboard
-binding requires macOS `pbcopy`; Ctrl-E launches Vim and Ctrl-V launches
-`code`, so those bindings require their respective tools.
+If an fzf preview is hidden, press `?`. In other fzf pickers, Appdots' generic
+Ctrl-Y clipboard binding requires macOS `pbcopy`; Ctrl-E launches Vim and
+Ctrl-V launches `code`.
 
 ## Git functions
 
@@ -79,11 +84,15 @@ that branch exists; substitute the real base branch otherwise.
 | `grs ~/Projects/home` | Print clean/changed state for child repositories. |
 | `grp ~/Projects/home` | Fetch/prune and fast-forward each child repository; reports failures. |
 | `grr ~/Projects/home` | Fetch/prune and rebase with autostash in each child repository. |
-| `grc ~/Projects/home 'chore: clarify manual usage'` | **Stage all changes, commit, and push in every child repo**, using managed `git aa`, `git com`, and `gps`. Use only when all those changes are intended. |
-| `gps` | Push the current branch to origin and set upstream tracking. |
+| `grc ~/Projects/home 'chore: clarify manual usage'` | **Stage all changes, commit, and push in every child repo**, using Git staging/commit and `gpp`. Clean checkouts still push existing commits. Use only when all those changes are intended. |
+| `gpp` | Push the current branch to origin and set upstream tracking. |
 | `gpl` | Pull `origin/<current-branch>` using Git's configured merge/rebase policy. |
 | `gsp` | Stash tracked changes, pull, then restore only the stash it created. Untracked files are not stashed. |
 | `gmm` | Fetch origin and merge `origin/main` into the current branch. |
+| `gbc feature/my-change` | Create and switch to a branch from local main/master; optional second argument selects another local base. Requires a clean checkout. |
+| `gbi` or `gbi feature/my-change main` | Review a local branch's committed changes: commits, diffstat, and full patch against local main/master or the second argument. |
+| `gmi` or `gmi main` | Merge local main/master (or the argument) into the current topic branch. No fetch. |
+| `gmo` or `gmo feature/my-change main` | Merge the current/named topic into local main/master or the second argument, using the target's worktree when already checked out. |
 | `gdf` or `gdf 3` | List files changed over one or three commits; requires enough history. |
 | `gbl` or `gbl ~/Projects/home/appdots` | List local and origin branches without fetching. |
 | `gbs` or `gbs ~/Projects/home/appdots` | Pick a branch and insert a switch command; it runs only when you accept the prompt. |
@@ -94,18 +103,119 @@ that branch exists; substitute the real base branch otherwise.
 | `gbr main` | Fetch/prune and report active, merged, and upstream-gone local branches. |
 | `gbd main` | Fetch/prune; pick deletion candidates with Tab/Enter and insert a deletion command for review. |
 
-The `gr*` directory argument defaults to the current directory; they inspect
-immediate children, not arbitrary descendants. A summary can report failures
-even if the function's final exit status is zero. `gbd` uses `git branch -D`
-for upstream-gone selections: accepting that prompt can discard unmerged
-branches. `gbs` remote selections create a tracking branch; choose the local
-entry when that branch already exists.
+The `gr*` directory argument defaults to the current directory. Only direct
+children with their own `.git` directory/file are in scope, including linked
+worktrees; ordinary directories inside a repository are skipped. Invalid
+parent directories fail before any action. Each helper summarizes successes,
+failures, and skips, and returns nonzero if any repository failed. A failure
+in one child does not stop the other children from being processed.
+
+`grc` keeps its stage/commit/push behavior. Missing origin, detached HEAD, or
+an unfinished Git operation fails before staging that child. A commit failure
+leaves staged work intact; a push failure leaves its commit intact. Re-running
+on a clean checkout retries the push without creating an empty commit.
+`grp` and `grr` fetch only when a child is detached, and refuse an unfinished
+Git operation. `grs` reports Git status errors as failures rather than clean.
+
+`gbd` offers only branches merged into the selected local base. It excludes
+main/master/develop/trunk, the base itself, and branches checked out in any
+worktree. It inserts a safely quoted `git branch -d` command for review; it
+never generates `-D`. A gone upstream alone is not a deletion candidate.
+The command uses the base checkout when available. Git can still refuse a
+branch whose configured upstream does not contain its commits; review that
+case explicitly. `gbs` selects one branch; remote selections create a tracking
+branch, so choose the local entry when that branch already exists.
 
 For pull/merge failures, inspect `git status` in the affected repo. Resolve
 conflicted files and use `git rebase --continue` or `git merge --continue`
 as appropriate, or abort that operation with `git rebase --abort` / `git
 merge --abort`. After failed `gsp`, inspect `git stash list` and `git stash
 show -p 'stash@{0}'` before applying a saved stash yourself.
+
+### A local branch and worktree workflow
+
+`gbc`, `gbi`, `gmi`, and `gmo` operate locally without fetching or pushing.
+`gmm` retains its existing fetch-and-merge behavior for origin/main.
+Use Conventional Branch names such as `feature/my-change`,
+`bugfix/tab-shortcuts`, or `chore/update-notes`.
+
+New Herdr tabs start your normal Zsh shell, whose existing startup modules
+automatically pull/rebase appdots and wikinotes (plus hyprdots on Linux).
+That separate behavior also runs when Herdr creates worktree tabs. See
+[startup updates](MANUAL.md#startup-updates) to disable it for an entirely
+local workflow.
+
+For a separate worktree, use Herdr: press `Ctrl+Space`, then `Ctrl+T`, and
+enter a branch name. It starts from the current branch's committed tip.
+To select a different base explicitly, the existing helper also accepts:
+
+```zsh
+herdr-workspace worktree feature/my-change main
+```
+
+Herdr chooses the path and focuses a workspace with `chat` and `repo` tabs.
+Use `chat` for the agent and `repo` for Git and tests. Both tabs start in the
+new checkout; no agent is launched automatically. The original checkout stays
+on its branch. For a branch in the current checkout instead, use
+`gbc feature/my-change` from a clean checkout.
+
+In the topic checkout, edit and test your change, then stage only the intended
+files and make a Conventional Commit. For example, after editing `README.md`:
+
+```zsh
+git add README.md
+git commit -m 'chore: clarify setup instructions'
+gbi                 # review committed changes against local main/master
+gmi                 # optional: bring newer local main/master commits into this branch
+# Run the project's tests again if that merge brought in changes.
+gmo                 # merge this topic back into local main/master
+```
+
+`gbi` reviews committed work; use `git diff` and `git diff --cached` before
+committing. Local review can simply be reading `gbi`, running tests, and
+choosing when to run `gmo`. A hosted PR/MR approval process can be added later.
+
+`gmo` uses a fast-forward when possible and otherwise creates a merge commit
+with a `chore: merge ...` subject. If the target branch is already checked out,
+the merge runs in that checkout and your shell stays in the topic worktree.
+If it is not checked out anywhere, this checkout switches to the target first.
+From main, use `gmo feature/my-change` to name the topic explicitly. The branch
+and worktree remain available after merging; cleanup is a separate action.
+
+Creation/merges refuse unfinished Git operations and uncommitted files in the
+checkouts they modify. `gmo` also checks the topic checkout, including untracked
+files. Nothing is stashed automatically. If a merge conflicts, the error names
+the checkout where you should run `git status`, resolve and `git merge
+--continue`, or run `git merge --abort`.
+
+`gmi` uses **local** main; the older `gmm` fetches **origin/main**.
+Similarly, `gbi` always reviews against a local branch, while the older `gbv`
+prefers origin's base when present. `gbu`, `gbp`, `gbr`, and `gbd` also use the
+network. `gbl` lists cached refs without fetching.
+
+Find these helpers with `gfh`, `gfh merge`, `gfh old`, or `gfh diff`. Merge
+functions have their own `git/merge` group: `gmm` merges remote main, `gmi`
+merges local main in, and `gmo` merges a branch out into main.
+
+The picker shows one short description per row, without wrapping, usage
+syntax, or former names. Search still covers full descriptions, usage, and
+former names. Ctrl-E explains when and how to use the selected command, with
+an example and its expected effect. For instance, the `gdf` explanation shows
+`gdf 3` and explains that it lists net file changes between HEAD~3 and HEAD.
+Ctrl-F prints the live function definition. `?` toggles a full-width preview
+below the list. For full descriptions without the picker, use `gfh --list old`.
+
+To load the updated functions and help display in an existing shell without
+running startup pulls:
+
+```zsh
+source ~/zsh_modules/shared/00-function-registry.sh
+source ~/zsh_modules/shared/git-functions.sh
+```
+
+Reloading preserves other registered functions and removes retired `gps`,
+`gbm`, `gml`, `gwc`, and `gwo` definitions from the shell. `gps` remains a
+search term for `gpp`; removed names are not callable aliases.
 
 ## Shell aliases
 

@@ -184,11 +184,20 @@ two tabs: `chat` for the agent and `repo` for your shell.
 | `prefix+shift+c` | `herdr-workspace new` | Prompts for a name (default: current directory), creates the workspace in the active pane's directory, names the tabs |
 | `prefix+shift+l` | `herdr-workspace layout` | Adds the missing tabs to the current workspace, e.g. one herdr created for a worktree |
 | `prefix+shift+w` | built-in `new_workspace` | Bare workspace with one unnamed tab |
+| `prefix+ctrl+t` | `herdr-workspace worktree` | Prompts for a branch; creates a worktree with `chat` and `repo` tabs |
+| `prefix+shift+t` | built-in `remove_worktree` | Remove a worktree through Herdr |
+| `prefix+t` | `herdr-fzf worktree` | Picks an existing worktree; opens it and ensures `chat` and `repo` tabs |
 
-`layout` only renames the first tab when it still has its default numeric
-label and never creates a tab whose name already exists, so it is safe to run
-twice. Change `FIRST_TAB` and `EXTRA_TABS` at the top of the script to alter
-the layout.
+`layout` only renames the first tab when it still has its default numeric or
+empty label and the `chat` tab is missing. It preserves custom names and adds
+only missing standard tabs, so it is safe to run twice. Change `FIRST_TAB` and
+`EXTRA_TABS` at the top of the script to alter the layout.
+
+Worktree creation and selection live in these Herdr shortcuts. Raw
+`herdr worktree create/open` commands bypass the layout helper.
+For local branching, review, and worktree-aware merges, see the
+[local workflow](SHELL.md#a-local-branch-and-worktree-workflow) (`gbc`, `gbi`,
+`gmi`, and `gmo`).
 
 ---
 
@@ -273,18 +282,21 @@ The `appdots` alias drops you into the repo directory from anywhere.
 
 ## 🧭 Shell Function Palette
 
-Run `fn` to browse the appdots functions loaded on the current platform. The
-palette searches function names, groups, descriptions, usage, aliases, and
-former names.
-Press Enter to insert a function into the prompt, `Ctrl-E` to inspect its live
-definition, or `?` to toggle its help preview. It never executes a selection.
+Run `fn` to browse the public appdots functions loaded on the current platform.
+It includes functions defined in appdots' managed Zsh modules and skips system
+functions and functions from other files. The palette searches function names,
+groups, descriptions, usage, aliases, and former names.
+Rows use short descriptions; full details stay searchable. Press `Ctrl-E` for
+an explanation with an example for any function, `Ctrl-F` for its live
+definition, or `?` for the help preview.
+Enter inserts the function name into the prompt. It never executes a selection.
 
 ```zsh
 fn                  # browse everything
 fn branch           # begin with a search
 fn --list git       # printable, non-interactive view
 fn --source gbs     # inspect one function
-gfh                 # browse every Git family with a categorized guide
+gfh                 # browse Git helpers with short descriptions
 gfh push            # exactly match the clean push helpers
 gfh --list          # print every Git helper, ordered by section
 ```
@@ -299,7 +311,7 @@ operates across child repositories, and other Git operations use a compact
 | `dirgpull` | `grp` | Fast-forward child repositories |
 | `dirgpullr` | `grr` | Rebase child repositories |
 | `gbra` | `grs` | Audit child repository status |
-| `gpush` | `gps` | Push the current branch |
+| `gps`, `gpush` | `gpp` | Push the current branch |
 | `gpull` | `gpl` | Pull the current branch |
 | `stashpull` | `gsp` | Stash, pull, and restore work |
 | `mm` | `gmm` | Merge `origin/main` into the current branch |

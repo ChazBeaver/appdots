@@ -5,4 +5,9 @@ notes() {
     yazi "$notes_dir"
 }
 
-_ad_register notes projects 'notes' 'Create the macOS work notes directory if needed and open it in Yazi.' run
+_ad_register notes projects notes 'Create the macOS work notes directory if needed and open it in Yazi.' run '' \
+    'When: You want to open your macOS work notes in Yazi.
+Example:
+  notes
+Result: The function makes ~/Projects/work/notes if it does not exist.
+It then opens that directory in Yazi.'

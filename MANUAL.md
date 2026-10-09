@@ -59,11 +59,18 @@ Run the regression fixtures without installing packages or changing the desktop:
 ```bash
 bash tests/packages.sh
 bash tests/themes.sh
+bash tests/git-local.sh
+bash tests/git-tools.sh
+bash tests/herdr-workspace.sh
 ```
 
 The package suite checks Linux ownership/presence and Homebrew non-leaf
 formulae using stub package managers. The theme suite checks missing coverage,
 intentional palette differences, failed rendering, and operation without Omarchy.
+The Git suites exercise local branches, merges, cleanup, searchable help, and
+bulk repository failures in disposable repositories and worktrees.
+The Herdr suite uses a fake CLI to check tab setup without touching a live
+session; it needs Python 3.11+ for TOML parsing.
 
 ## Back up and restore
 
@@ -223,15 +230,32 @@ herdr-workspace new documentation   # same layout with an explicit name
 herdr-workspace layout              # ensure tabs in this Herdr workspace
 herdr workspace list                # find IDs for the next form
 herdr-workspace layout WORKSPACE_ID # substitute an ID from the listing
+herdr-workspace worktree feature/my-change main # create a worktree with chat/repo
+herdr-workspace open /path/to/worktree          # open/reuse it with chat/repo
 herdr-fzf tab                       # select and focus a tab
 herdr-fzf workspace                 # select and focus a workspace
-herdr-fzf worktree                  # inside a Git repo; open/focus a worktree
+herdr-fzf worktree                  # inside a Git repo; pick worktree, ensure chat/repo
 ```
 
 `HERDR_ACTIVE_PANE_CWD` overrides the directory used for workspace creation.
 `layout` uses `HERDR_ACTIVE_WORKSPACE_ID`, then `HERDR_WORKSPACE_ID`, unless
 an ID is supplied. These are independent examples, not a batch to run in
 sequence. Picker selection takes effect immediately; Esc cancels.
+
+`worktree` and `open` require `HERDR_ENV=1` (run inside Herdr). With no branch
+argument, `worktree` prompts; with no base argument, Herdr uses the current
+branch's committed tip. Tab setup uses the checkout path returned by Herdr,
+preserves custom tab names, and adds only missing standard tabs. Worktree
+creation and opening focus the workspace after layout succeeds. Use the
+Herdr shortcuts below; for branch commands see the
+[local workflow](SHELL.md#a-local-branch-and-worktree-workflow).
+
+With the configured prefix (`Ctrl+Space`), `prefix+Ctrl+T` creates a worktree
+with the standard tabs, `prefix+Shift+T` removes a worktree, `prefix+T` picks
+an existing worktree, and
+`prefix+Shift+L` applies the layout to the current workspace. After editing the
+Herdr bindings, run `herdr server reload-config` (or `prefix+Q`). Raw
+`herdr worktree create/open` commands bypass the Appdots layout helper.
 
 `ghostty-shell` is the configured terminal entrypoint. To reproduce it by
 hand, run `~/.local/bin/ghostty-shell`; it starts a Zsh login shell (or falls

@@ -10,7 +10,7 @@ export FZF_DEFAULT_OPTS="
 --prompt='∼ ' --pointer='▶' --marker='✓'
 --bind '?:toggle-preview'
 --bind 'ctrl-a:select-all'
---bind 'ctrl-y:execute-silent(echo {+} | pbcopy)'
+--bind 'ctrl-y:execute-silent(echo -n {+} | { wl-copy 2>/dev/null || pbcopy 2>/dev/null || xclip -selection clipboard 2>/dev/null || xsel --clipboard --input 2>/dev/null })'
 --bind 'ctrl-e:execute(echo {+} | xargs -o vim)'
 --bind 'ctrl-v:execute(code {+})'
 "
@@ -34,7 +34,12 @@ fda() {
   cd -- "$dir"
 }
 
-_ad_register fda fzf 'fda [ROOT|--all]' 'Choose a directory under HOME, a supplied root, or the full filesystem.' run 'fd'
+_ad_register fda fzf 'fda [ROOT|--all]' 'Choose a directory under HOME, a supplied root, or the full filesystem.' run fd \
+    'When: You want to find a directory below ~/Projects.
+Example:
+  fda ~/Projects
+Result: The picker lists directories below ~/Projects.
+Select example to change into ~/Projects/example.'
 
 # Find a file to edit
 fe() {
@@ -42,7 +47,12 @@ fe() {
     file=$(find ${1:-.} -type f 2> /dev/null | fzf --preview 'bat --style=numbers --color=always {} || cat {}' +m) && [ -n "$file" ] && nvim "$file"
 }
 
-_ad_register fe fzf 'fe [ROOT]' 'Choose a file below a directory and open it in Neovim.' run
+_ad_register fe fzf 'fe [ROOT]' 'Choose a file below a directory and open it in Neovim.' run '' \
+    'When: You want to edit a file below the current directory.
+Example:
+  fe .
+Result: The picker lists files below your current directory.
+Select foo.txt to open it in Neovim.'
 
 # Find relative directories
 fcd() {
@@ -50,4 +60,10 @@ fcd() {
   dir=$(find "${1:-.}" -type d -not -path '*/.*' 2>/dev/null | fzf +m) && cd "$dir"
 }
 
-_ad_register fcd fzf 'fcd [ROOT]' 'Choose a non-hidden directory below a root and change into it.' run
+_ad_register fcd fzf 'fcd [ROOT]' 'Choose a non-hidden directory below a root and change into it.' run '' \
+    'When: You want to go to a directory below ~/Projects.
+Example:
+  fcd ~/Projects
+Result: The picker lists directories below ~/Projects.
+Select example to change into ~/Projects/example.
+Hidden directories are not in the list.'

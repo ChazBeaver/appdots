@@ -84,7 +84,7 @@ case "$mode" in
     ;;
   worktree)
     # herdr exits nonzero on an API error and prints the JSON error to stderr.
-    listing="$(herdr worktree list --cwd "$PWD" 2>&1 || true)"
+    listing="$(herdr worktree list --cwd "${HERDR_ACTIVE_PANE_CWD:-$PWD}" 2>&1 || true)"
     [ -n "$listing" ] || fail "herdr worktree list produced no output"
     error_message="$(printf '%s\n' "$listing" | jq -r '.error.message // empty')"
     [ -z "$error_message" ] || fail "$error_message"
@@ -129,5 +129,5 @@ target_id="$choice"
 case "$mode" in
   tab) exec herdr tab focus "$target_id" ;;
   workspace) exec herdr workspace focus "$target_id" ;;
-  worktree) exec herdr worktree open --cwd "$PWD" --path "$target_id" --focus ;;
+  worktree) exec herdr-workspace open "$target_id" ;;
 esac
