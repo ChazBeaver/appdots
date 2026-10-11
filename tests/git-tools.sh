@@ -115,7 +115,7 @@ export TMPDIR="$APPDOTS_TEST_ROOT"
 # Examples and definitions are output only; selecting a bulk helper must
 # return its explanation without calling it or placing it at the prompt.
 example="$(APPDOTS_TEST_FZF_KEY=ctrl-e gfn grc)"
-[[ "$example" == *'grc ~/Projects/example "chore: update examples"'* && "$example" == *'adds all files'* ]] || fail 'Ctrl-E did not print the example and its effect'
+[[ "$example" == *'grc ~/Projects/example "chore: update examples"'* && "$example" == *'stages all changes'* ]] || fail 'Ctrl-E did not print the example and its effect'
 example="$(APPDOTS_TEST_FZF_KEY=ctrl-e gfn NUMBER)"
 [[ "$example" == *'gdf 3'* && "$example" == *'compares HEAD~3 with HEAD'* ]] || fail 'Ctrl-E did not explain the hidden usage match'
 definition="$(APPDOTS_TEST_FZF_KEY=ctrl-f gfn gdf)"

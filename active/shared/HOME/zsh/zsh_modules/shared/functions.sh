@@ -22,7 +22,7 @@ home () {
   cd "$base/$choice" || return 1
 }
 
-_ad_register home projects home 'Choose a repository under ~/Projects/home and change into it.' run '' \
+_ad_register home projects home 'Choose a home project; Select a directory directly below ~/Projects/home and change to it.' run '' \
     'When: You need to change to a project in ~/Projects/home.
 The directory ~/Projects/home/appdots must exist for this example.
 Example:
@@ -67,7 +67,7 @@ cx() {
   cd "$prev"
 }
 
-_ad_register cx apps cx 'Launch Codex from ~/.codex, then return to the previous directory.' run '' \
+_ad_register cx apps cx 'Open Codex in ~/.codex; Start Codex from its configuration directory, then return to the original directory.' run '' \
     'When: You need to start Codex from its configuration directory.
 The directory ~/.codex must exist.
 Example:
@@ -106,7 +106,7 @@ reporoot() {
   return 1
 }
 
-_ad_register reporoot projects reporoot 'Change to the top-level project directory under Projects/home or Projects/work.' run rr \
+_ad_register reporoot projects reporoot 'Go to the project directory; Change to the first directory below ~/Projects/home or ~/Projects/work.' run rr \
     'When: You are in ~/Projects/home/example/src.
 You need to change to the top directory of that project.
 Example:
@@ -121,14 +121,15 @@ edit-zshrc() {
     vim $HOME/.zshrc
 }
 
-_ad_register edit-zshrc utilities edit-zshrc 'Open ~/.zshrc in Vim.' run '' \
+_ad_register edit-zshrc utilities edit-zshrc 'Edit Zsh startup configuration; Open ~/.zshrc with vim, which appdots maps to Neovim.' run '' \
     'When: You need to change the Zsh startup configuration in ~/.zshrc.
 Example:
   edit-zshrc
-Result: The function opens ~/.zshrc in Vim.
-Make the necessary changes in Vim.
+Result: The function opens ~/.zshrc with vim.
+In the managed shell, the vim alias selects Neovim.
+Make the necessary changes in the editor.
 Save the file with :w.
-Close Vim with :q.
+Close the editor with :q.
 Open a new terminal session to use the new startup configuration.'
 
 # Make a Dir and Jump to it Immediately
@@ -136,7 +137,7 @@ mkcd() {
   mkdir -p "$1" && cd "$1"
 }
 
-_ad_register mkcd projects 'mkcd DIRECTORY' 'Create a directory and immediately change into it.' run '' \
+_ad_register mkcd projects 'mkcd DIRECTORY' 'Make and enter a directory; Create any missing parent directories, then change to the supplied path.' run '' \
     'When: You need to make a directory and change to it.
 Example:
   mkcd ~/Projects/example
@@ -154,7 +155,7 @@ fh() {
   print -z -- "$cmd"
 }
 
-_ad_register fh fzf fh 'Choose a shell-history entry and insert it into the prompt.' view hf \
+_ad_register fh fzf fh 'Find a history command; Search the current shell history and put the selected command at the prompt.' view hf \
     'When: You need to find a command in the history of the current shell.
 Example:
   fh
@@ -178,7 +179,7 @@ y() {
   rm -f "$tmp"
 }
 
-_ad_register y apps 'y [PATH]' 'Launch Yazi and adopt its directory when it exits.' run '' \
+_ad_register y apps 'y [PATH]' 'Browse and change directory; Open Yazi and change the shell to the final directory that Yazi reports.' run '' \
     'When: You need to use Yazi to select the next directory for the shell.
 Example:
   y ~/Downloads
@@ -194,7 +195,7 @@ printcolors() {
   for i in {0..255}; do print -P "%F{$i}Color $i%f"; done
 }
 
-_ad_register printcolors utilities printcolors 'Print the terminal color palette from 0 through 255.' view '' \
+_ad_register printcolors utilities printcolors 'Show terminal colors; Print color numbers from 0 through 255 in their corresponding text colors.' view '' \
     'When: You need a color number for terminal text.
 Example:
   printcolors

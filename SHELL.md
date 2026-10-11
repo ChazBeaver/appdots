@@ -69,39 +69,49 @@ or installed first; `mkcd` and `notes` create their own target directories.
 | `cam` or `cam overlay` | Linux: call external `webcam-launch` in overlay mode; requires that helper, which this repo does not ship. |
 | `edit-ghostty` | macOS: edit `~/Library/Application Support/com.mitchellh.ghostty/config`; this is a legacy path, while the managed config is `~/.config/ghostty/config`. Use `nvim ~/.config/ghostty/config` for the managed file. |
 
-If an fzf preview is hidden, press `?`. In other fzf pickers, Appdots' generic
-Ctrl-Y clipboard binding requires macOS `pbcopy`; Ctrl-E launches Vim and
-Ctrl-V launches `code`.
+If an fzf preview is hidden, press `?`.
+The generic Ctrl-Y binding copies the selection and keeps the picker open.
+It tries `wl-copy`, `pbcopy`, `xclip`, then `xsel` until a copy succeeds.
+One of those commands must be available with a working clipboard connection.
+In pickers other than `fn` and `gfn`, Ctrl-E opens the selection with `vim`.
+Ctrl-V opens the selection with `code`.
 
 ## Git functions
 
-Run single-repo commands inside a Git checkout. Remote operations require a
-configured `origin` and working authentication. Examples using `main` assume
-that branch exists; substitute the real base branch otherwise.
+Run commands for one repository inside its Git checkout.
+Commands that name `origin` require that remote to exist.
+Remote operations need a working connection and any required authentication.
+Examples with `main` require that branch to exist.
+Replace `main` with the necessary base branch for your repository.
+
+When you omit BASE, the helpers select local `main`, then `master`, then the
+current branch. They use the first available branch in that order.
+The optional TARGET in `gmo` uses the same order.
+`gbv` selects the base name this way, then prefers its cached origin reference.
 
 | Example | Effect |
 | --- | --- |
-| `grs ~/Projects/home` | Print clean/changed state for child repositories. |
+| `grs ~/Projects/home` | Print clean or changes for each direct child repository, then summarize failures and skips. A clean checkout can still have unpushed commits. |
 | `grp ~/Projects/home` | Fetch/prune and fast-forward each child repository; reports failures. |
 | `grr ~/Projects/home` | Fetch/prune and rebase with autostash in each child repository. |
 | `grc ~/Projects/home 'chore: clarify manual usage'` | **Stage all changes, commit, and push in every child repo**, using Git staging/commit and `gpp`. Clean checkouts still push existing commits. Use only when all those changes are intended. |
 | `gpp` | Push the current branch to origin and set upstream tracking. |
-| `gpl` | Pull `origin/<current-branch>` using Git's configured merge/rebase policy. |
-| `gsp` | Stash tracked changes, pull, then restore only the stash it created. Untracked files are not stashed. |
+| `gpl` | Pull `origin/<current-branch>` using the configured pull policy, regardless of the branch upstream. |
+| `gsp` | Stash tracked changes, run `git pull` with the configured remote and branch, then restore the new stash. Untracked files stay in the checkout. |
 | `gmm` | Fetch origin and merge `origin/main` into the current branch. |
 | `gbc feature/my-change` | Create and switch to a branch from local main/master; optional second argument selects another local base. Requires a clean checkout. |
 | `gbi` or `gbi feature/my-change main` | Review a local branch's committed changes: commits, diffstat, and full patch against local main/master or the second argument. |
 | `gmi` or `gmi main` | Merge local main/master (or the argument) into the current topic branch. No fetch. |
 | `gmo` or `gmo feature/my-change main` | Merge the current/named topic into local main/master or the second argument, using the target's worktree when already checked out. |
-| `gdf` or `gdf 3` | List files changed over one or three commits; requires enough history. |
+| `gdf` or `gdf 3` | List file names with net changes from `HEAD~1` or `HEAD~3` to `HEAD`. The selected ancestor must exist. |
 | `gbl` or `gbl ~/Projects/home/appdots` | List local and origin branches without fetching. |
 | `gbs` or `gbs ~/Projects/home/appdots` | Pick a branch and insert a switch command; it runs only when you accept the prompt. |
-| `gbu main` | Check out main, then pull origin/main. |
-| `gbo` | Fetch/prune and list remote branches with commits older than 30 days, excluding remote main/HEAD. |
-| `gbv main` | Show this branch's changed files since the merge base with origin/main (or local main). |
+| `gbu main` | Check out main, then pull origin/main. A failed pull does not undo the branch switch. |
+| `gbo` | Fetch all remotes, prune stale references, and list branches whose tip commit is over 30 days old. Exclude remote main and HEAD references. |
+| `gbv main` | List committed file changes from the common ancestor of HEAD and cached origin/main, or local main if that remote reference is absent. |
 | `gbp` | Fetch/prune remote refs and report local branches whose upstream is gone. |
-| `gbr main` | Fetch/prune and report active, merged, and upstream-gone local branches. |
-| `gbd main` | Fetch/prune; pick deletion candidates with Tab/Enter and insert a deletion command for review. |
+| `gbr main` | Fetch all remotes, prune stale references, and report unmerged, merged, and missing-upstream local branches against local main. |
+| `gbd main` | Fetch all remotes and prune stale references. Select merged local branches with Tab, then press Enter to put a deletion command at the prompt. |
 
 The `gr*` directory argument defaults to the current directory. Only direct
 children with their own `.git` directory/file are in scope, including linked
@@ -117,20 +127,31 @@ on a clean checkout retries the push without creating an empty commit.
 `grp` and `grr` fetch only when a child is detached, and refuse an unfinished
 Git operation. `grs` reports Git status errors as failures rather than clean.
 
-`gbd` offers only branches merged into the selected local base. It excludes
-main/master/develop/trunk, the base itself, and branches checked out in any
-worktree. It inserts a safely quoted `git branch -d` command for review; it
-never generates `-D`. A gone upstream alone is not a deletion candidate.
-The command uses the base checkout when available. Git can still refuse a
-branch whose configured upstream does not contain its commits; review that
-case explicitly. `gbs` selects one branch; remote selections create a tracking
-branch, so choose the local entry when that branch already exists.
+`gbd` offers only branches merged into the selected local base.
+It excludes main, master, develop, trunk, the base, and branches checked out
+in any worktree. Closing a terminal does not remove its worktree.
+The function puts a quoted `git branch -d` command at the prompt for review.
+A missing upstream alone does not make a branch eligible for deletion.
+The command uses the base checkout when one exists.
+Git can still refuse deletion if the configured upstream does not contain
+the branch commits. Inspect that case before you continue.
+
+`gbr` uses merge status to group branches, without an age limit.
+Its merged list marks branches checked out in worktrees.
+Both `gbr` and `gbd` compare against the selected local base after a fetch.
+That fetch updates remote references; it does not update the local base branch.
+
+`gbs` selects one branch and puts a switch command at the prompt.
+An origin selection prepares a command to create a local tracking branch.
+If that local branch already exists, select its local entry.
+Check the prepared command before you run it.
 
 For pull/merge failures, inspect `git status` in the affected repo. Resolve
 conflicted files and use `git rebase --continue` or `git merge --continue`
 as appropriate, or abort that operation with `git rebase --abort` / `git
 merge --abort`. After failed `gsp`, inspect `git stash list` and `git stash
 show -p 'stash@{0}'` before applying a saved stash yourself.
+Previously staged changes can return as unstaged changes after `gsp`.
 
 ### A local branch and worktree workflow
 
@@ -191,7 +212,12 @@ the checkout where you should run `git status`, resolve and `git merge
 `gmi` uses **local** main; the older `gmm` fetches **origin/main**.
 Similarly, `gbi` always reviews against a local branch, while the older `gbv`
 prefers origin's base when present. `gbu`, `gbp`, `gbr`, and `gbd` also use the
-network. `gbl` lists cached refs without fetching.
+network. `gbl` and `gbs` list cached local and origin branches without fetching.
+
+`gdf` follows the first parent for each step in `HEAD~NUMBER`.
+Its output shows the net difference between the two commits.
+A file that changed and then returned to its earlier contents is absent.
+Both `gdf` and `gbv` exclude uncommitted changes.
 
 Find these helpers with `gfn`, `gfn merge`, `gfn old`, or `gfn diff`. Merge
 functions have their own `git/merge` group: `gmm` merges remote main, `gmi`

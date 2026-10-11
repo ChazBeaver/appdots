@@ -5,7 +5,7 @@ notes() {
     yazi "$notes_dir"
 }
 
-_ad_register notes projects notes 'Create the macOS work notes directory if needed and open it in Yazi.' run '' \
+_ad_register notes projects notes 'Open macOS work notes in Yazi; Create ~/Projects/work/notes if necessary and open it without changing the shell directory.' run '' \
     'When: You need to read or edit files in your macOS work notes directory.
 Example:
   notes

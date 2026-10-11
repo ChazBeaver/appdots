@@ -313,7 +313,7 @@ EOF
   fi
 }
 
-_ad_register fn help 'fn [QUERY]' 'Browse, inspect, and insert appdots functions.' view list-functions \
+_ad_register fn help 'fn [QUERY]' 'Find appdots functions; Search names and descriptions, inspect examples and source, or insert a name at the prompt.' view list-functions \
     'When: You need to find an appdots function for a task.
 Example:
   fn directory
@@ -328,6 +328,9 @@ Press Ctrl-F to close the picker and show the definition and source file.
 Press Enter to put the selected function name at the shell prompt.
 Add the necessary arguments before you run the command.
 Press Esc to close the picker without a selection.
+
+Press ? to show or hide the help preview while the picker stays open.
+Use gfn to search only the Git function groups.
 
 Other examples:
   fn --group fzf

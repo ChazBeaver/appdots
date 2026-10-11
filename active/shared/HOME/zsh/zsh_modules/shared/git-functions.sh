@@ -74,14 +74,24 @@ grc() {
   done
   _ad_gr_summary grc "$ok" "$failed" "$skipped"
 }
-_ad_register grc git/repos 'grc [DIRECTORY] "COMMIT MESSAGE"' 'Commit/push child repos; stage changes and report failures.' danger 'dirgcm gcmdir' \
-    'When: You checked the changes in the foo and bar repositories.
-You want to publish them.
+_ad_register grc git/repos 'grc [DIRECTORY] "COMMIT MESSAGE"' 'Commit and push child repos; Stage all changes in direct child repositories and report failures.' danger 'dirgcm gcmdir' \
+    'When: You need to commit and publish changes in several repositories.
+The foo and bar repositories are directly below ~/Projects/example.
+Check all changes in those repositories before you run this command.
 Example:
   grc ~/Projects/example "chore: update examples"
-Result: The function adds all files in each direct child Git repository.
-It makes a commit when files changed. It pushes each current branch to origin.
-The function uses the same message for each new commit.'
+Result: The function stages all changes in each direct child Git repository.
+This includes file additions, changes, and deletions that Git can stage.
+It makes a commit if staged changes exist.
+It uses the same message for each new commit.
+It pushes each current branch to origin and sets its upstream.
+A repository with no file changes still pushes its existing commits.
+
+Omit DIRECTORY to use the current directory as the parent.
+The function skips directories without their own .git entry.
+It reports failures and continues with the other repositories.
+If a push fails, the local commit remains available for another attempt.
+Use git status in a failed repository to check its state.'
 
 _ad_gr_pull() {
   emulate -L zsh
@@ -129,26 +139,40 @@ grr() {
   (( $# <= 1 )) || { print -u2 -- 'Usage: grr [DIRECTORY]'; return 1; }
   _ad_gr_pull rebase "${1:-$PWD}"
 }
-_ad_register grr git/repos 'grr [DIRECTORY]' 'Rebase/pull child repos; fetch with autostash and report failures.' danger dirgpullr \
-    'When: The foo and bar repositories have local commits and remote updates.
+_ad_register grr git/repos 'grr [DIRECTORY]' 'Rebase child repos from origin; Fetch and pull direct child repositories with rebase and autostash.' danger dirgpullr \
+    'When: Several repositories have local commits and new commits at origin.
+The repositories are directly below ~/Projects/example.
 Example:
   grr ~/Projects/example
-Result: The function fetches each direct child Git repository.
-It rebases local commits on the matching branch at origin.
-It uses autostash for tracked file changes.
-If the pull succeeds, Git restores those changes.'
+Result: The function fetches origin and prunes its stale references.
+It rebases each current branch onto the branch with the same name at origin.
+Git uses autostash to save and restore tracked file changes.
+The rebase or the restoration of changes can cause conflicts.
+For a detached HEAD, the function only fetches from all remotes.
+
+Omit DIRECTORY to use the current directory as the parent.
+The function reports failures and continues with the other repositories.
+If a repository fails, check git status in that repository.
+Resolve any conflicts before you retry the command.'
 
 grp() {
   (( $# <= 1 )) || { print -u2 -- 'Usage: grp [DIRECTORY]'; return 1; }
   _ad_gr_pull fast-forward "${1:-$PWD}"
 }
-_ad_register grp git/repos 'grp [DIRECTORY]' 'Pull child repos; fetch with fast-forward only and report failures.' danger dirgpull \
-    'When: You want remote updates in the foo and bar repositories.
+_ad_register grp git/repos 'grp [DIRECTORY]' 'Pull child repos from origin; Fetch direct child repositories and allow only fast-forward updates.' danger dirgpull \
+    'When: You need remote updates in several repositories.
+The repositories are directly below ~/Projects/example.
 Example:
   grp ~/Projects/example
-Result: The function fetches each direct child Git repository.
-It pulls the matching branch only when Git can fast-forward.
-It reports a failure for a branch that has diverged.'
+Result: The function fetches origin and prunes its stale references.
+It pulls the branch with the same name as each current branch.
+The pull permits only a fast-forward update.
+If local and remote commits have diverged, the pull fails.
+For a detached HEAD, the function only fetches from all remotes.
+
+Omit DIRECTORY to use the current directory as the parent.
+The function reports failures and continues with the other repositories.
+If a repository fails, check git status in that repository.'
 
 grs() {
   emulate -L zsh
@@ -177,13 +201,17 @@ grs() {
   done
   _ad_gr_summary grs "$ok" "$failed" "$skipped"
 }
-_ad_register grs git/repos 'grs [DIRECTORY]' 'Status of child repos; clean, changed, or failed.' view gbra \
-    'When: You want to find local file changes in the foo and bar repositories.
+_ad_register grs git/repos 'grs [DIRECTORY]' 'Check child repository files; Report clean files, local changes, or failures in direct child repositories.' view gbra \
+    'When: You need to find repositories with local file changes.
+The repositories are directly below ~/Projects/example.
 Example:
   grs ~/Projects/example
 Result: The function checks each direct child Git repository.
-It shows clean, changed, or failed for each repository.
-It does not fetch or change files.'
+It prints clean or changes for each successful check.
+It reports failed checks and skips directories without their own .git entry.
+The final summary gives the number of successful, failed, and skipped checks.
+Omit DIRECTORY to use the current directory as the parent.
+A clean result can still have commits that you have not pushed.'
 
 # =========================
 # Single-repository sync helpers (g*)
@@ -234,12 +262,20 @@ gsp() {
   fi
 }
 
-_ad_register gsp git/sync gsp 'Stash, pull, restore; reapply stashed changes.' run stashpull \
-    'When: You changed tracked files and must pull before you commit them.
+_ad_register gsp git/sync gsp 'Stash, pull, and restore; Save tracked changes and pull with the configured remote and branch.' run stashpull \
+    'When: You need to pull updates while you have tracked file changes.
+The current branch must have a configured upstream or other pull settings.
 Example:
   gsp
-Result: The function stashes tracked changes. It pulls the current branch.
-It then restores the stash that it made. It does not stash untracked files.'
+Result: The function saves tracked changes in a new stash if necessary.
+It runs git pull with your configured remote, branch, and pull settings.
+After a successful pull, it applies and removes only the stash it created.
+Untracked files stay in the checkout.
+Previously staged changes can return as unstaged changes.
+
+If the pull fails, the new stash remains available.
+If stash restoration causes conflicts, Git keeps that stash.
+Use git status and git stash list to inspect a failure before you continue.'
 
 # Git Merge Main into Feature-Branch
 gmm() {
@@ -268,12 +304,17 @@ gmm() {
   echo "✅ Merge complete. '$branch' now includes 'origin/main'."
 }
 
-_ad_register gmm git/merge gmm 'Merge remote main in; fetch origin/main into this branch.' run mm \
-    'When: You are on feature/foo. You want the latest origin/main in your branch.
+_ad_register gmm git/merge gmm 'Merge origin/main in; Fetch origin, then merge its main branch into the current branch.' run mm \
+    'When: You are on feature/foo and need the latest commits from origin/main.
+The remote origin must have a main branch.
 Example:
   gmm
 Result: The function fetches origin and merges origin/main into feature/foo.
-It does not switch branches or push. Use gmi for your local main branch.'
+The shell stays on feature/foo.
+Git uses your merge settings for the merge.
+If conflicts occur, use git status to identify the files that need changes.
+Use gmi main when you need the commits from local main.
+The function does not push the result.'
 
 # =========================
 # Git Push/Pull helpers
@@ -293,12 +334,15 @@ gpp() {
   git push -u origin "$branch"
 }
 
-_ad_register gpp git/sync gpp 'Push branch to origin; set upstream tracking.' run 'gps gpush' \
-    'When: You are on feature/foo. You committed changes and want to publish them.
+_ad_register gpp git/sync gpp 'Push branch to origin; Push existing commits and set upstream tracking for the current branch.' run 'gps gpush' \
+    'When: You are on feature/foo and need to publish its local commits.
+Commit the necessary changes before you run this command.
 Example:
   gpp
-Result: The function pushes feature/foo to origin/feature/foo.
-It sets origin/feature/foo as the upstream branch. It does not commit files.'
+Result: The function pushes feature/foo to the origin remote.
+It sets origin/feature/foo as the upstream branch after a successful push.
+The function needs a current branch and an origin remote.
+If the push fails, the local commits remain in the repository.'
 
 # Git Pull Origin (same spirit as gpp)
 # - pulls origin/<current-branch>
@@ -316,13 +360,15 @@ gpl() {
   git pull origin "$branch"
 }
 
-_ad_register gpl git/sync gpl 'Pull current branch; pull origin/current-branch into this branch.' run gpull \
-    'When: You are on feature/foo. That same branch has new commits at origin.
+_ad_register gpl git/sync gpl 'Pull branch from origin; Pull the remote branch with the same name as the current branch.' run gpull \
+    'When: You are on feature/foo and need new commits from origin/feature/foo.
 Example:
   gpl
 Result: The function pulls origin/feature/foo into your current branch.
-Git uses your pull settings to merge or rebase the commits.
-Use gmm when you want origin/main.'
+It selects origin and the current branch name, regardless of its upstream.
+Git uses your pull settings to merge, rebase, or require a fast-forward.
+If the pull fails, use git status to check the repository before you continue.
+Use gmm when you need updates from origin/main.'
 
 # =========================
 # Git branch helpers (gb*)
@@ -335,12 +381,19 @@ gfn() {
   fn --group git "$@"
 }
 
-_ad_register gfn git/help 'gfn [--list] [QUERY]' 'Search Git functions; branch, merge, diff, and cleanup.' view 'gfh gbh' \
+_ad_register gfn git/help 'gfn [--list] [QUERY]' 'Search Git functions; Find helpers for branches, merges, diffs, and cleanup.' view 'gfh gbh' \
     'When: You need to find a Git function for a task.
 Example:
   gfn old
 Result: The picker shows Git functions for old or stale branches.
-Press Ctrl-E for an example. Press Ctrl-F for the function source.
+The search includes descriptions, arguments, and former names.
+Press Ctrl-E to close the picker and show the example.
+Press Ctrl-F to close the picker and show the definition and source file.
+Press Enter to put the selected function name at the shell prompt.
+Add the necessary arguments before you run the command.
+
+Use gfn without search text to show all Git functions.
+Use gfn --list old to print the matches without the picker.
 Use fn to search all function groups.'
 
 # ---------- internal helper: choose a sensible base branch ----------
@@ -387,12 +440,16 @@ gdf() {
   git diff --name-only "HEAD~${n}" HEAD
 }
 
-_ad_register gdf git/diff 'gdf [NUMBER]' 'Diff recent commit files; files changed across commits on this branch.' view gbdiff \
-    'When: You want the names of files that changed in the last three commits.
+_ad_register gdf git/diff 'gdf [NUMBER]' 'List recent commit files; Compare HEAD with an earlier commit and list file names with net changes.' view gbdiff \
+    'When: You need file names with net changes across the last three commits.
+The branch must have enough history for HEAD~3 to exist.
 Example:
   gdf 3
 Result: The function compares HEAD~3 with HEAD and lists changed file names.
-The example needs three earlier commits. Uncommitted changes are not included.'
+HEAD~3 follows the first parent three times from the current commit.
+The list excludes changes that later commits fully reversed.
+It also excludes uncommitted changes.
+Use gdf without a number to compare HEAD~1 with HEAD.'
 
 # =========================
 # Git branch operations (gb*)
@@ -465,12 +522,20 @@ gbc() {
   _ad_gb_require_local "$base" && _ad_gb_clean "$PWD" || return 1
   git switch --no-track -c "$branch" "refs/heads/$base"
 }
-_ad_register gbc git/branch 'gbc BRANCH [BASE]' 'Create branch from main; switch to a local branch with clean files.' run '' \
-    'When: You want a new branch for a task. Your current checkout is clean.
+_ad_register gbc git/branch 'gbc BRANCH [BASE]' 'Create and switch branch; Create a branch from a local base without fetching or making a worktree.' run '' \
+    'When: You need a new branch for a task, based on local main.
+The checkout must have no tracked changes or untracked files.
+Finish any Git operation in progress before you run this command.
 Example:
   gbc feature/foo main
 Result: The function creates feature/foo from local main.
-It switches the current checkout to feature/foo. It does not make a worktree.'
+It switches the current checkout to feature/foo.
+The new branch has no upstream until you set one, for example with gpp.
+The function needs main to exist locally and feature/foo to be a new name.
+It does not fetch or create a separate worktree.
+
+Without BASE, it uses local main, then master, then the current branch.
+It uses the first available branch in that order.'
 
 # Review committed topic changes without consulting origin.
 gbi() {
@@ -486,14 +551,20 @@ gbi() {
   git --no-pager log --oneline "refs/heads/$base..refs/heads/$branch" || return 1
   git diff --stat --patch "refs/heads/$base...refs/heads/$branch"
 }
-_ad_register gbi git/branch 'gbi [BRANCH] [BASE]' 'Review branch commits/diff; inspect changes against local main.' view '' \
-    'When: You finished work on feature/foo. You want to review it before a merge.
+_ad_register gbi git/branch 'gbi [BRANCH] [BASE]' 'Review branch commits and diff; Show committed changes against a local base without fetching.' view '' \
+    'When: You need to review the committed work on feature/foo before a merge.
+Both feature/foo and main must exist as local branches.
 Example:
   gbi feature/foo main
-Result: The function shows commits in feature/foo.
-These commits are absent from local main.
-It shows a summary and full diff from the common ancestor.
-It does not include uncommitted changes.'
+Result: The function lists commits in feature/foo that are absent from main.
+It also shows a file summary and the full diff.
+The diff starts at the common ancestor of main and feature/foo.
+The review excludes uncommitted changes.
+The current checkout stays on its original branch.
+
+Without BRANCH, it reviews the current branch.
+Without BASE, it uses local main, then master, then the current branch.
+Use gbi feature/foo develop to compare with a different local base.'
 
 # Merge a topic into the target's existing worktree when it has one.
 gmo() {
@@ -521,14 +592,24 @@ gmo() {
   fi
   _ad_gb_merge_local "$target_dir" "$branch" "$target"
 }
-_ad_register gmo git/merge 'gmo [BRANCH] [TARGET]' 'Merge branch out to main; merge into the local target worktree, no push.' run gbm \
-    'When: You tested feature/foo. You want its commits in local main.
+_ad_register gmo git/merge 'gmo [BRANCH] [TARGET]' 'Merge branch into local target; Use the target worktree when available, without fetching or pushing.' run gbm \
+    'When: You tested feature/foo and need to merge its commits into local main.
+The current, source, and target checkouts must have no file changes.
+The checkouts must also have no untracked files.
+Finish any Git operation in progress before you run this command.
 Example:
   gmo feature/foo main
 Result: The function merges feature/foo into local main.
-It uses the worktree for main if one is open.
-It does not push or delete feature/foo.
-Commit changes in the affected checkouts before you use this command.'
+If a worktree has main checked out, the merge runs in that worktree.
+Otherwise, the current checkout switches to main before the merge.
+Git uses a fast-forward when possible or makes a merge commit.
+The source branch and its worktree remain available after the merge.
+The function does not fetch or push.
+
+Without BRANCH, it uses the current branch as the source.
+Without TARGET, it uses local main, then master, then the current branch.
+The source and target must be different local branches.
+If the merge stops, check git status in the target worktree.'
 
 # Local counterpart to gmm, which fetches and merges origin/main.
 gmi() {
@@ -547,13 +628,20 @@ gmi() {
   fi
   _ad_gb_merge_local "$PWD" "$base" "$branch"
 }
-_ad_register gmi git/merge 'gmi [BASE]' 'Merge local main in; merge into this branch, no fetch or pull.' run gml \
-    'When: You are on feature/foo. Local main has new commits that you need.
-Your checkout is clean.
+_ad_register gmi git/merge 'gmi [BASE]' 'Merge local base into branch; Merge a local branch into the current branch without fetching or pushing.' run gml \
+    'When: You are on feature/foo and need new commits from local main.
+The checkout must have no tracked changes or untracked files.
+Finish any Git operation in progress before you run this command.
 Example:
   gmi main
 Result: The function merges local main into feature/foo.
-It does not fetch or push. Use gmm for the latest origin/main.'
+Git uses a fast-forward when possible or makes a merge commit.
+The shell stays on feature/foo.
+If the merge stops, use git status to inspect the checkout.
+
+Without BASE, it uses local main, then master, then the current branch.
+The base must be a different local branch from the current branch.
+Use gmm to fetch and merge origin/main.'
 
 # ---------- gbu: Checkout & Update branch from Origin ----------
 gbu() {
@@ -562,13 +650,16 @@ gbu() {
   git checkout "$branch" && git pull origin "$branch"
 }
 
-_ad_register gbu git/branch 'gbu BRANCH' 'Switch/update branch; check out and pull matching branch from origin.' run '' \
-    'When: You want to return to feature/foo and get its remote changes.
+_ad_register gbu git/branch 'gbu BRANCH' 'Switch branch and pull; Check out a branch and pull the branch with the same name from origin.' run '' \
+    'When: You need to switch to feature/foo and get its remote commits.
 Example:
   gbu feature/foo
 Result: The function checks out feature/foo.
 It then pulls origin/feature/foo into that branch.
-Use the existing worktree if feature/foo is open in another worktree.'
+Git uses your pull settings to merge, rebase, or require a fast-forward.
+If the checkout fails, the function stops before the pull.
+A failed pull does not undo the branch switch.
+Use its existing worktree if another worktree has feature/foo checked out.'
 
 gbo() {
   emulate -L zsh
@@ -605,13 +696,16 @@ gbo() {
   | sort
 }
 
-_ad_register gbo git/branch gbo 'Find old remote branches; older than 30 days, review stale branches.' run gbls \
-    'When: You want to find old remote branches for review.
+_ad_register gbo git/branch gbo 'Find old remote branches; Fetch all remotes and list branches whose tip commit is over 30 days old.' run gbls \
+    'When: You need to find remote branches with old commits for review.
 Example:
   gbo
-Result: The function fetches and prunes remote references.
-It lists remote branches whose last commit is older than 30 days.
-It does not delete remote branches.'
+Result: The function fetches from all remotes and prunes stale references.
+It lists remote branches whose tip commit is older than 30 days.
+Each row shows a branch name and its commit date.
+It uses the committer date of the tip commit to calculate its age.
+The list excludes the main branch and HEAD reference for each remote.
+The function does not delete branches on the remotes.'
 
 # ---------- gbl ----------
 gbl() {
@@ -633,12 +727,15 @@ gbl() {
     | sed 's/^/  /'
 }
 
-_ad_register gbl git/branch 'gbl [REPOSITORY]' 'List local/remote branches; cached branch names, no fetch.' view '' \
+_ad_register gbl git/branch 'gbl [REPOSITORY]' 'List local and origin branches; Show cached branch names in the selected repository without fetching.' view '' \
     'When: You need a branch name before you switch or merge.
 Example:
   gbl .
 Result: The function lists local branches and cached origin branches.
-It does not fetch. The list can be out of date until you fetch.'
+The list excludes branches from other remotes.
+It does not fetch, so the remote list can be out of date.
+Without REPOSITORY, it uses the current directory.
+Use gbl ~/Projects/home/appdots to inspect another repository.'
 
 # ---------- gbs ----------
 gbs() {
@@ -672,17 +769,24 @@ gbs() {
   print -z -- "$cmd"
 }
 
-_ad_register gbs git/branch 'gbs [REPOSITORY]' 'Switch branch; pick a local/remote branch to insert into the prompt.' view '' \
-    'When: You want to select a branch by name.
+_ad_register gbs git/branch 'gbs [REPOSITORY]' 'Prepare a branch switch; Pick a local or origin branch and put a switch command at the prompt.' view '' \
+    'When: You need to select a branch by name before you switch to it.
 Example:
   gbs .
-Result: The function shows local and remote branches in a picker.
-Select a branch to put a Git switch command at your prompt.
-Review the command and press Enter to run it.'
+Result: The picker lists local branches and cached origin branches.
+Select a branch with the arrow keys.
+Press Enter to put a Git switch command at the shell prompt.
+Check that command before you run it.
+
+A local selection prepares a switch to the existing branch.
+An origin selection prepares a new local branch that tracks the remote branch.
+Select the local entry if that local branch already exists.
+Without REPOSITORY, the function uses the current directory.
+The function does not fetch, so the remote list can be out of date.'
 
 # ---------- gbv: branch vs main ----------
 # Compare changes made in current branch to base (defaults to main/master)
-# Shows which files differ (name + status) between base..HEAD, using origin/<base> if present.
+# Show committed file changes from the merge base, preferring origin/<base>.
 gbv() {
   local base base_ref
   git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "Not a git repo" >&2; return 1; }
@@ -699,14 +803,20 @@ gbv() {
   git diff --name-status "${base_ref}...HEAD"
 }
 
-_ad_register gbv git/branch 'gbv [BASE]' 'Diff branch files vs main; files changed since branching from main.' view gbcvm \
-    'When: You are on feature/foo.
-You want files changed since the branch left main.
+_ad_register gbv git/branch 'gbv [BASE]' 'List branch file changes; Diff committed file names and status codes from the common ancestor with a base.' view gbcvm \
+    'When: You are on feature/foo and need its committed file changes.
 Example:
   gbv main
 Result: The function lists changed file names and status codes.
-It compares feature/foo with cached origin/main, if that branch exists.
-Otherwise, it uses local main. It does not fetch.'
+It uses cached origin/main if that reference exists, or local main otherwise.
+The diff starts at the common ancestor of that reference and HEAD.
+Status codes include A for added, M for modified, and D for deleted files.
+The output excludes uncommitted changes.
+The function does not fetch, so the remote reference can be out of date.
+
+Without BASE, it selects a local name: main, master, then the current branch.
+It prefers the matching origin reference for that name.
+Use gbi to see the full diff against a local base.'
 
 # Structured ref fields avoid the whitespace, '*' and '+' markers in branch -vv.
 _ad_gb_gone() {
@@ -729,14 +839,15 @@ gbp() {
   git fetch --all --prune || return 1
   _ad_gb_gone
 }
-_ad_register gbp git/branch gbp 'Prune old remote refs; remove stale refs, report dead upstream branches.' run '' \
+_ad_register gbp git/branch gbp 'Prune old remote references; Fetch all remotes, prune stale references, and report missing upstreams.' run '' \
     'When: Your remote branch list still shows branches that no longer exist.
 Example:
   gbp
-Result: The function fetches from remotes.
-It removes references that no longer exist.
-It lists local branches that lost their remote upstream branch.
-It does not delete local branches.'
+Result: The function fetches from all remotes.
+It removes local references to branches that no longer exist on the remotes.
+It lists local branches whose configured upstream reference is missing.
+A missing upstream does not mean that the local commits are merged.
+The function keeps the local branches.'
 
 gbr() {
   emulate -L zsh
@@ -765,13 +876,22 @@ gbr() {
   print -r -- 'Dead/stale branches whose upstream is gone (may be unmerged):'
   _ad_gb_gone
 }
-_ad_register gbr git/branch 'gbr [BASE]' 'Report old/stale branches; active, merged, and dead upstreams.' run '' \
-    'When: You want to review branches before you remove old local branches.
+_ad_register gbr git/branch 'gbr [BASE]' 'Report branch merge status; Fetch remotes and report active, old merged, and stale upstream branches.' run '' \
+    'When: You need to review local branches before you remove them.
+The base branch main must exist locally for this example.
 Example:
   gbr main
-Result: The function lists active and merged branches.
-It also lists branches that lost their upstream.
-It marks branches that are open in a worktree. It does not delete branches.'
+Result: The function fetches from all remotes and prunes stale references.
+It compares local branches with local main.
+It lists unmerged branches, then branches merged into main.
+The merged list excludes main, master, develop, trunk, and the selected base.
+It marks merged branches that are checked out in a worktree.
+It also lists local branches with missing upstream references.
+
+The report uses merge status, without an age limit.
+The fetch does not update local main to match origin/main.
+Without BASE, it uses local main, then master, then the current branch.
+The function does not delete branches.'
 
 # Only merged, unchecked-out, unprotected branches are deletion candidates.
 # A vanished upstream alone is not proof that local commits can be deleted.
@@ -815,12 +935,22 @@ gbd() {
   done <<< "$selection"
   print -z -- "$cmd"
 }
-_ad_register gbd git/branch 'gbd [BASE]' 'Delete old merged branches; remove dead/stale branches safely.' danger '' \
-    'When: You merged feature/foo into main. Its worktree is closed.
-You want to delete the old local branch.
+_ad_register gbd git/branch 'gbd [BASE]' 'Prepare branch deletion; Select old merged local branches and put a delete command at the prompt.' danger '' \
+    'When: You merged feature/foo into local main and need to delete that branch.
+No worktree can have feature/foo checked out, even if its terminal is closed.
 Example:
   gbd main
-Result: The picker shows merged local branches that are not open in worktrees.
+Result: The function fetches from all remotes and prunes stale references.
+The picker lists local branches whose commits are all in local main.
+It excludes branches checked out in any worktree.
+It also excludes main, master, develop, trunk, and the selected base.
+Local main must already contain the commits; a fetch does not update it.
+
 Select feature/foo with Tab.
 Press Enter to put a git branch -d command at your prompt.
-Review the command and press Enter to run it.'
+Check that command before you run it.
+The command uses the base worktree if one exists, or the current repository.
+Git can refuse deletion if its additional merge checks fail.
+
+Without BASE, it uses local main, then master, then the current branch.
+A missing upstream alone does not make a branch eligible for deletion.'

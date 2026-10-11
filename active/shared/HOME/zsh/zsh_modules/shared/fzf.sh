@@ -34,7 +34,7 @@ fda() {
   cd -- "$dir"
 }
 
-_ad_register fda fzf 'fda [ROOT|--all]' 'Choose a directory under HOME, a supplied root, or the full filesystem.' run fd \
+_ad_register fda fzf 'fda [ROOT|--all]' 'Find directories, even hidden; Search from HOME, a supplied root, or /, then change to the selected directory.' run fd \
     'When: You need to find a directory below ~/Projects.
 The search includes hidden directories.
 The directory ~/Projects/example must exist for this example.
@@ -48,6 +48,7 @@ Use fda --all to start the search at /.
 The search skips /proc, /sys, /dev, and /run.
 
 The picker shows a maximum of 150000 directory paths by default.
+Directories beyond that limit are absent from the picker.
 Set FD_MAX_RESULTS to change this limit, for example:
   FD_MAX_RESULTS=200000 fda ~/Projects'
 
@@ -57,7 +58,7 @@ fe() {
     file=$(find ${1:-.} -type f 2> /dev/null | fzf --preview 'bat --style=numbers --color=always {} || cat {}' +m) && [ -n "$file" ] && nvim "$file"
 }
 
-_ad_register fe fzf 'fe [ROOT]' 'Choose a file below a directory and open it in Neovim.' run '' \
+_ad_register fe fzf 'fe [ROOT]' 'Find a file to edit; Search below a directory and open the selected file in Neovim.' run '' \
     'When: You need to find and edit a file below the current directory.
 The file ./foo.txt must exist for this example.
 Example:
@@ -75,7 +76,7 @@ fcd() {
   dir=$(find "${1:-.}" -type d -not -path '*/.*' 2>/dev/null | fzf +m) && cd "$dir"
 }
 
-_ad_register fcd fzf 'fcd [ROOT]' 'Choose a non-hidden directory below a root and change into it.' run '' \
+_ad_register fcd fzf 'fcd [ROOT]' 'Find directories, skip hidden; Search below the current or supplied directory and change to the selected path.' run '' \
     'When: You need to change to a directory below ~/Projects.
 The directory ~/Projects/example must exist for this example.
 Example:
