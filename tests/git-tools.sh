@@ -38,6 +38,9 @@ for name in gbo gbp gbr gbd; do
   [[ "$old_matches" == *"$name"* ]] || fail "Search old missed $name"
 done
 [[ "$(matches gps)" == gpp ]] || fail 'former push name is not searchable'
+for name in gfh gbh; do
+  [[ "$(matches "$name")" == gfn ]] || fail "Former Git function finder name is not searchable: $name"
+done
 [[ "$(matches NUMBER)" == gdf ]] || fail 'usage arguments are not searchable'
 for name in gmm gmi gmo; do
   [[ "$(matches merge)" == *"$name"* ]] || fail "Search merge missed $name"
@@ -59,22 +62,24 @@ sample_function() { :; }
 _ad_register sample_function utilities sample_function 'A non-Git function.' view
 gps() { :; }
 gwc() { :; }
+gfh() { :; }
 _ad_register gps git/sync gps 'Old push.' run
 _ad_register gwc git/worktree gwc 'Old worktree.' run
+_ad_register gfh git/help gfh 'Old Git function finder.' view
 _AD_FN_OWNED=()
 source "$registry"
 _ad_fn_owned gpp || fail 'registry reload did not restore an owned function'
 source "$module"
 [[ -n "${_AD_FN_DESCRIPTION[sample_function]:-}" ]] || fail 'registry reload lost other functions'
 _ad_fn_owned sample_function && fail 'function from outside appdots was marked as owned'
-for name in gps gwc gwo gml gbm; do
+for name in gps gwc gwo gml gbm gfh; do
   (( ! ${+functions[$name]} )) || fail "Retired function remains callable: $name"
   [[ -z "${_AD_FN_DESCRIPTION[$name]:-}" ]] || fail "Retired registry entry remains: $name"
 done
-COLUMNS=80 gfh --list > "$APPDOTS_TEST_ROOT/help-list"
+COLUMNS=80 gfn --list > "$APPDOTS_TEST_ROOT/help-list"
 awk 'length($0) > 80 { exit 1 }' "$APPDOTS_TEST_ROOT/help-list" || fail 'printable help overflows 80 columns'
 
-# Exercise the actual fn/gfh invocation with a non-interactive fzf adapter.
+# Exercise the actual fn/gfn invocation with a non-interactive fzf adapter.
 # It preserves filtering and captures layout flags instead of opening a UI.
 export APPDOTS_TEST_FZF_REAL="$(command -v fzf)"
 mkdir "$APPDOTS_TEST_ROOT/bin"
@@ -106,17 +111,17 @@ chmod +x "$APPDOTS_TEST_ROOT/bin/fzf"
 test_path_before="$PATH"
 export PATH="$APPDOTS_TEST_ROOT/bin:$PATH"
 export TMPDIR="$APPDOTS_TEST_ROOT"
-[[ "$(COLUMNS=80 gfh gps)" == gpp ]] || fail 'interactive help did not find/return renamed push'
+[[ "$(COLUMNS=80 gfn gps)" == gpp ]] || fail 'interactive help did not find/return renamed push'
 # Examples and definitions are output only; selecting a bulk helper must
 # return its explanation without calling it or placing it at the prompt.
-example="$(APPDOTS_TEST_FZF_KEY=ctrl-e gfh grc)"
+example="$(APPDOTS_TEST_FZF_KEY=ctrl-e gfn grc)"
 [[ "$example" == *'grc ~/Projects/example "chore: update examples"'* && "$example" == *'adds all files'* ]] || fail 'Ctrl-E did not print the example and its effect'
-example="$(APPDOTS_TEST_FZF_KEY=ctrl-e gfh NUMBER)"
+example="$(APPDOTS_TEST_FZF_KEY=ctrl-e gfn NUMBER)"
 [[ "$example" == *'gdf 3'* && "$example" == *'compares HEAD~3 with HEAD'* ]] || fail 'Ctrl-E did not explain the hidden usage match'
-definition="$(APPDOTS_TEST_FZF_KEY=ctrl-f gfh gdf)"
+definition="$(APPDOTS_TEST_FZF_KEY=ctrl-f gfn gdf)"
 [[ "$definition" == *'gdf ()'* && "$definition" == *'git diff --name-only'* ]] || fail 'Ctrl-F did not print the function'
 unsafe_query="no-match'; touch $APPDOTS_TEST_ROOT/injected; #"
-[[ -z "$(gfh "$unsafe_query")" ]] || fail 'unmatched query selected a command'
+[[ -z "$(gfn "$unsafe_query")" ]] || fail 'unmatched query selected a command'
 [[ ! -e "$APPDOTS_TEST_ROOT/injected" ]] || fail 'search query was executed'
 
 # fn uses the same keys for shared and platform-specific functions.

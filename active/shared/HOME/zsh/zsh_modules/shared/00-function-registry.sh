@@ -314,9 +314,27 @@ EOF
 }
 
 _ad_register fn help 'fn [QUERY]' 'Browse, inspect, and insert appdots functions.' view list-functions \
-    'When: You know a task, but you do not know its function name.
+    'When: You need to find an appdots function for a task.
 Example:
   fn directory
-Result: The picker lists functions that match "directory".
-Press Ctrl-E for an example. Press Ctrl-F for the function source.
-Press Enter to put the selected name at your prompt.'
+Result: The function opens the fzf picker with "directory" as the search text.
+The picker includes appdots functions for your operating system.
+The search uses names, groups, descriptions, arguments, and former names.
+Use fn without search text to show all functions in the picker.
+
+Select a function with the arrow keys.
+Press Ctrl-E to close the picker and show the example.
+Press Ctrl-F to close the picker and show the definition and source file.
+Press Enter to put the selected function name at the shell prompt.
+Add the necessary arguments before you run the command.
+Press Esc to close the picker without a selection.
+
+Other examples:
+  fn --group fzf
+  fn --list directory
+  fn --source mkcd
+  fn --help
+Use --group to show only functions in that group or its subgroups.
+Use --list to print the matches without the picker.
+Use --source to show the definition and source file of one function.
+Use --help to show the options, keys, and symbols.'

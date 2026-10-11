@@ -1,6 +1,6 @@
 # Remove retired definitions when this module is reloaded in an existing shell.
 # Former names remain searchable in their replacement's registry entry.
-for _ad_retired_git_name in gps gbm gml gwc gwo; do
+for _ad_retired_git_name in gps gbm gml gwc gwo gfh; do
   unfunction "$_ad_retired_git_name" 2>/dev/null || true
   unset "_AD_FN_GROUP[$_ad_retired_git_name]" "_AD_FN_USAGE[$_ad_retired_git_name]" \
     "_AD_FN_DESCRIPTION[$_ad_retired_git_name]" "_AD_FN_EFFECT[$_ad_retired_git_name]" \
@@ -328,19 +328,20 @@ Use gmm when you want origin/main.'
 # Git branch helpers (gb*)
 # =========================
 
-# ---------- gfh: searchable Git function help ----------
-gfh() {
+# ---------- gfn: searchable Git function help ----------
+gfn() {
   local _AD_FN_CONTEXT_EXACT=1
 
   fn --group git "$@"
 }
 
-_ad_register gfh git/help 'gfh [--list] [QUERY]' 'Search Git helpers; branch, merge, diff, and cleanup.' view gbh \
-    'When: You know what you want to do, but you do not know the command name.
+_ad_register gfn git/help 'gfn [--list] [QUERY]' 'Search Git functions; branch, merge, diff, and cleanup.' view 'gfh gbh' \
+    'When: You need to find a Git function for a task.
 Example:
-  gfh old
-Result: The picker shows Git helpers for old or stale branches.
-Press Ctrl-E for an example. Press Ctrl-F for the function source.'
+  gfn old
+Result: The picker shows Git functions for old or stale branches.
+Press Ctrl-E for an example. Press Ctrl-F for the function source.
+Use fn to search all function groups.'
 
 # ---------- internal helper: choose a sensible base branch ----------
 _ad_gb_base() {

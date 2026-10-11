@@ -35,7 +35,7 @@ and never from sync. Do not run bootstrap to test a change.
   will do.
 - Shell behavior lives in `active/shared/HOME/zsh/zsh_modules/<scope>/`.
   A public function is registered with `_ad_register` immediately after its
-  definition so `fn` and `gfh` can find it; a renamed function keeps its
+  definition so `fn` and `gfn` can find it; a renamed function keeps its
   former name in the registry's legacy field rather than as a callable alias.
 - Scripts in `bin/<scope>/` are linked to `~/.local/bin/` with `.sh`
   stripped, so name them for the command they become.

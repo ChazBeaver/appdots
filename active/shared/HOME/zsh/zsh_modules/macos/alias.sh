@@ -11,12 +11,18 @@ edit-ghostty() {
 }
 
 _ad_register edit-ghostty utilities edit-ghostty 'Open the macOS Ghostty configuration in Vim.' run '' \
-    'When: You want to edit the legacy Ghostty config on macOS.
+    'When: You need to edit the older Ghostty configuration path on macOS.
 Example:
   edit-ghostty
-Result: Vim opens the config at
-~/Library/Application Support/com.mitchellh.ghostty/config.
-For the appdots config, use nvim ~/.config/ghostty/config.'
+Result: The function opens this configuration file in Vim:
+  ~/Library/Application Support/com.mitchellh.ghostty/config
+Make the necessary changes in Vim.
+Save the file with :w.
+Close Vim with :q.
+
+Appdots uses ~/.config/ghostty/config for its managed configuration.
+To edit that file, use this command:
+  nvim ~/.config/ghostty/config'
 
 alias la="eza -lahG --icons --grid --group-directories-first"
 alias ls="eza -lah --icons --group-directories-first"

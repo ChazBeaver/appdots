@@ -6,8 +6,11 @@ notes() {
 }
 
 _ad_register notes projects notes 'Create the macOS work notes directory if needed and open it in Yazi.' run '' \
-    'When: You want to open your macOS work notes in Yazi.
+    'When: You need to read or edit files in your macOS work notes directory.
 Example:
   notes
 Result: The function makes ~/Projects/work/notes if it does not exist.
-It then opens that directory in Yazi.'
+It opens that directory in Yazi.
+Select the necessary file in Yazi.
+The shell keeps its original directory when you close Yazi.
+Use notes without arguments.'

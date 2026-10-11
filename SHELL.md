@@ -30,12 +30,12 @@ fn --list                  # printable list; no picker
 fn --list --group git      # all Git families
 fn --source gbs            # show the live definition
 fn --help                  # full palette options
-gfh                        # Git-specific guide/picker
-gfh push                   # search Git help
-gfh --list                 # printable Git guide
+gfn                        # Git-specific guide/picker
+gfn push                   # search Git help
+gfn --list                 # printable Git guide
 ```
 
-In `fn` and `gfh`, Ctrl-E prints an example and Ctrl-F shows the function
+In `fn` and `gfn`, Ctrl-E prints an example and Ctrl-F shows the function
 definition. Every example explains when to use the command, gives a
 concrete invocation, and describes its effect. `fn` lists registered public
 functions from appdots' managed Zsh modules; it skips system functions and
@@ -193,7 +193,7 @@ Similarly, `gbi` always reviews against a local branch, while the older `gbv`
 prefers origin's base when present. `gbu`, `gbp`, `gbr`, and `gbd` also use the
 network. `gbl` lists cached refs without fetching.
 
-Find these helpers with `gfh`, `gfh merge`, `gfh old`, or `gfh diff`. Merge
+Find these helpers with `gfn`, `gfn merge`, `gfn old`, or `gfn diff`. Merge
 functions have their own `git/merge` group: `gmm` merges remote main, `gmi`
 merges local main in, and `gmo` merges a branch out into main.
 
@@ -203,7 +203,7 @@ former names. Ctrl-E explains when and how to use the selected command, with
 an example and its expected effect. For instance, the `gdf` explanation shows
 `gdf 3` and explains that it lists net file changes between HEAD~3 and HEAD.
 Ctrl-F prints the live function definition. `?` toggles a full-width preview
-below the list. For full descriptions without the picker, use `gfh --list old`.
+below the list. For full descriptions without the picker, use `gfn --list old`.
 
 To load the updated functions and help display in an existing shell without
 running startup pulls:

@@ -23,11 +23,16 @@ home () {
 }
 
 _ad_register home projects home 'Choose a repository under ~/Projects/home and change into it.' run '' \
-    'When: You want to open a project in ~/Projects/home.
+    'When: You need to change to a project in ~/Projects/home.
+The directory ~/Projects/home/appdots must exist for this example.
 Example:
   home
-Result: The picker lists directories directly under ~/Projects/home.
-Select example to change into ~/Projects/home/example.'
+Result: The fzf picker lists directories directly in ~/Projects/home.
+The list excludes hidden directories.
+Type part of a directory name to reduce the list.
+Select appdots with the arrow keys.
+Press Enter to change to ~/Projects/home/appdots.
+The function uses ~/Projects/home as a fixed path.'
 
 # work() {
 #   local base="$HOME/Projects/work"
@@ -63,11 +68,14 @@ cx() {
 }
 
 _ad_register cx apps cx 'Launch Codex from ~/.codex, then return to the previous directory.' run '' \
-    'When: You want to start Codex from its configuration directory.
+    'When: You need to start Codex from its configuration directory.
+The directory ~/.codex must exist.
 Example:
   cx
-Result: The function starts Codex in ~/.codex.
-When Codex ends, the shell returns to your previous directory.'
+Result: The function records the current directory.
+It changes to ~/.codex and starts Codex there.
+When Codex stops, the shell returns to the recorded directory.
+Use cx without arguments.'
 
 reporoot() {
   local dir="$PWD"
@@ -100,21 +108,28 @@ reporoot() {
 
 _ad_register reporoot projects reporoot 'Change to the top-level project directory under Projects/home or Projects/work.' run rr \
     'When: You are in ~/Projects/home/example/src.
-You want to go to the top of that project.
+You need to change to the top directory of that project.
 Example:
   reporoot
 Result: The shell changes to ~/Projects/home/example.
-This also works for a project under ~/Projects/work.'
+The function uses the first directory after ~/Projects/home/ in the path.
+It also accepts paths below ~/Projects/work/.
+It uses the directory path to find the project, without a Git command.
+If you are outside these two project paths, the function shows an error.'
 
 edit-zshrc() {
     vim $HOME/.zshrc
 }
 
 _ad_register edit-zshrc utilities edit-zshrc 'Open ~/.zshrc in Vim.' run '' \
-    'When: You want to change your Zsh startup file.
+    'When: You need to change the Zsh startup configuration in ~/.zshrc.
 Example:
   edit-zshrc
-Result: Vim opens ~/.zshrc. Save the file in the editor.'
+Result: The function opens ~/.zshrc in Vim.
+Make the necessary changes in Vim.
+Save the file with :w.
+Close Vim with :q.
+Open a new terminal session to use the new startup configuration.'
 
 # Make a Dir and Jump to it Immediately
 mkcd() {
@@ -122,11 +137,15 @@ mkcd() {
 }
 
 _ad_register mkcd projects 'mkcd DIRECTORY' 'Create a directory and immediately change into it.' run '' \
-    'When: You want a new directory and want to enter it.
+    'When: You need to make a directory and change to it.
 Example:
   mkcd ~/Projects/example
 Result: The function makes ~/Projects/example if it does not exist.
-The shell then changes to that directory.'
+It also makes the necessary parent directories.
+The shell then changes to that directory.
+If the directory already exists, the shell changes to it.
+If mkdir fails, the shell stays in the original directory.
+Use quotes for a path with spaces, for example: mkcd "example project".'
 
 # Search History using FZF
 fh() {
@@ -136,12 +155,18 @@ fh() {
 }
 
 _ad_register fh fzf fh 'Choose a shell-history entry and insert it into the prompt.' view hf \
-    'When: You ran a command before and want to run it again.
+    'When: You need to find a command in the history of the current shell.
 Example:
   fh
-Result: The picker shows your shell history.
-Select a command to put it at your prompt. Review it before you run it.
-Press Ctrl-Y to copy the selected command to the clipboard instead.'
+Result: The function reads the shell history and opens the fzf picker.
+Type part of the command to reduce the list.
+Select a command with the arrow keys.
+Press Enter to put the selected command at the shell prompt.
+Check the command before you run it.
+
+Press Ctrl-Y to copy the selected command to the clipboard.
+The picker stays open after the copy.
+Press Esc to close the picker without a selection.'
 
 # Yazi launch and Change Directory when closed
 y() {
@@ -154,11 +179,15 @@ y() {
 }
 
 _ad_register y apps 'y [PATH]' 'Launch Yazi and adopt its directory when it exits.' run '' \
-    'When: You want to browse files in ~/Downloads with Yazi.
+    'When: You need to use Yazi to select the next directory for the shell.
 Example:
   y ~/Downloads
-Result: Yazi opens at ~/Downloads.
-When you exit Yazi, the shell moves to the directory you selected.'
+Result: The function opens Yazi at ~/Downloads.
+Use Yazi to change to the necessary directory.
+Close Yazi when you are ready to return to the shell.
+The function reads the final directory path from Yazi.
+The shell then changes to that directory.
+Use y without a path to start in the current directory.'
 
 # Print a list of Colors for testing
 printcolors() {
@@ -166,8 +195,11 @@ printcolors() {
 }
 
 _ad_register printcolors utilities printcolors 'Print the terminal color palette from 0 through 255.' view '' \
-    'When: You want to see the colors that your terminal can show.
+    'When: You need a color number for terminal text.
 Example:
   printcolors
 Result: The function prints color numbers from 0 to 255.
-Use the list to select a terminal color.'
+Each line uses the color that its number identifies.
+Find the necessary color in the output.
+Use its number in a terminal setting that accepts a color number.
+The terminal theme can change the colors that these numbers show.'

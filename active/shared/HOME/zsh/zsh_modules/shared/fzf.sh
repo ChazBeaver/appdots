@@ -35,11 +35,21 @@ fda() {
 }
 
 _ad_register fda fzf 'fda [ROOT|--all]' 'Choose a directory under HOME, a supplied root, or the full filesystem.' run fd \
-    'When: You want to find a directory below ~/Projects.
+    'When: You need to find a directory below ~/Projects.
+The search includes hidden directories.
+The directory ~/Projects/example must exist for this example.
 Example:
   fda ~/Projects
-Result: The picker lists directories below ~/Projects.
-Select example to change into ~/Projects/example.'
+Result: The function searches ~/Projects and opens the fzf picker.
+Select the example directory with the arrow keys.
+Press Enter to change to that directory.
+Use fda without a path to search your home directory.
+Use fda --all to start the search at /.
+The search skips /proc, /sys, /dev, and /run.
+
+The picker shows a maximum of 150000 directory paths by default.
+Set FD_MAX_RESULTS to change this limit, for example:
+  FD_MAX_RESULTS=200000 fda ~/Projects'
 
 # Find a file to edit
 fe() {
@@ -48,11 +58,16 @@ fe() {
 }
 
 _ad_register fe fzf 'fe [ROOT]' 'Choose a file below a directory and open it in Neovim.' run '' \
-    'When: You want to edit a file below the current directory.
+    'When: You need to find and edit a file below the current directory.
+The file ./foo.txt must exist for this example.
 Example:
   fe .
-Result: The picker lists files below your current directory.
-Select foo.txt to open it in Neovim.'
+Result: The function searches for files and opens the fzf picker.
+Type part of a file name to reduce the list.
+Select ./foo.txt with the arrow keys.
+Press Enter to open the file in Neovim.
+Use fe without a path to search the current directory.
+Use fe ~/Projects to search below ~/Projects.'
 
 # Find relative directories
 fcd() {
@@ -61,9 +76,12 @@ fcd() {
 }
 
 _ad_register fcd fzf 'fcd [ROOT]' 'Choose a non-hidden directory below a root and change into it.' run '' \
-    'When: You want to go to a directory below ~/Projects.
+    'When: You need to change to a directory below ~/Projects.
+The directory ~/Projects/example must exist for this example.
 Example:
   fcd ~/Projects
-Result: The picker lists directories below ~/Projects.
-Select example to change into ~/Projects/example.
-Hidden directories are not in the list.'
+Result: The function searches ~/Projects and opens the fzf picker.
+The list excludes paths that contain a hidden directory.
+Select the example directory with the arrow keys.
+Press Enter to change to that directory.
+Use fcd without a path to search the current directory.'

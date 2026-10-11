@@ -290,15 +290,16 @@ Rows use short descriptions; full details stay searchable. Press `Ctrl-E` for
 an explanation with an example for any function, `Ctrl-F` for its live
 definition, or `?` for the help preview.
 Enter inserts the function name into the prompt. It never executes a selection.
+Use `fn` for functions, `gfn` for Git functions, and `fh` to find history.
 
 ```zsh
 fn                  # browse everything
 fn branch           # begin with a search
 fn --list git       # printable, non-interactive view
 fn --source gbs     # inspect one function
-gfh                 # browse Git helpers with short descriptions
-gfh push            # exactly match the clean push helpers
-gfh --list          # print every Git helper, ordered by section
+gfn                 # browse Git helpers with short descriptions
+gfn push            # exactly match the clean push helpers
+gfn --list          # print every Git helper, ordered by section
 ```
 
 Git functions use consistent families: `gb*` operates on branches, `gr*`
@@ -318,7 +319,7 @@ operates across child repositories, and other Git operations use a compact
 | `gbdiff` | `gdf` | List files changed across recent commits |
 | `gbls` | `gbo` | List old remote branches |
 | `gbcvm` | `gbv` | Compare the current branch with its base |
-| `gbh` | `gfh` | Browse and search Git functions |
+| `gfh`, `gbh` | `gfn` | Browse and search Git functions |
 | `fd` | `fda` | Broad fuzzy directory search |
 | `hf` | `fh` | Fuzzy history search |
 | `list-functions` | `fn` | Browse appdots functions |
