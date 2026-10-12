@@ -1,19 +1,3 @@
-# Run Cava based on proper config file location with Omarchy
-cava() {
-  local config="$HOME/.config/omarchy/current/theme/cava_theme"
-  command cava -p "$config" "$@"
-}
-
-_ad_register cava apps 'cava [ARGUMENTS]' 'Show audio levels with Cava; Start Cava with the Omarchy theme configuration and any supplied arguments.' run '' \
-    'When: You need to see audio levels with the current Omarchy theme.
-The Cava program and the theme configuration file must exist.
-Example:
-  cava
-Result: The function starts Cava with this theme configuration file:
-  ~/.config/omarchy/current/theme/cava_theme
-Cava shows the audio levels with the colors from that file.
-The function passes any arguments after cava to the Cava program.'
-
 cam() {
   webcam-launch "${1:-overlay}"
 }

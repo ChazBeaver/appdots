@@ -65,7 +65,6 @@ or installed first; `mkcd` and `notes` create their own target directories.
 | `cx` | Launch the installed Codex CLI in `~/.codex`, then return; it takes no forwarded arguments. |
 | `edit-zshrc` | Edit `~/.zshrc` via Vim (normally aliased to Neovim). |
 | `printcolors` | Display terminal colors 0–255. |
-| `cava` | Linux: launch Cava with `~/.config/omarchy/current/theme/cava_theme`; requires that file and the binary. If the legacy path is absent, use `command cava -p ~/.local/state/omarchy/current/theme/cava_theme` with a theme providing it. |
 | `cam` or `cam overlay` | Linux: call external `webcam-launch` in overlay mode; requires that helper, which this repo does not ship. |
 | `edit-ghostty` | macOS: edit `~/Library/Application Support/com.mitchellh.ghostty/config`; this is a legacy path, while the managed config is `~/.config/ghostty/config`. Use `nvim ~/.config/ghostty/config` for the managed file. |
 
