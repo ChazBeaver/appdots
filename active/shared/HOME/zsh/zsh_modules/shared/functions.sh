@@ -78,44 +78,30 @@ When Codex stops, the shell returns to the recorded directory.
 Use cx without arguments.'
 
 reporoot() {
-  local dir="$PWD"
-  dir="${dir%/}"
+  emulate -L zsh
+  local checkout_root
 
-  local base_home="$HOME/Projects/home/"
-  local base_work="$HOME/Projects/work/"
-
-  # If we're somewhere under ~/Projects/home/<repo>/...
-  if [[ "$dir" == "$base_home"* ]]; then
-    local rest="${dir#"$base_home"}"   # everything after .../home/
-    local top="${rest%%/*}"            # first path segment (repo name)
-    [[ -n "$top" ]] || { echo "Already at $base_home"; return 1; }
-    cd "$base_home$top" || return 1
-    return 0
-  fi
-
-  # If we're somewhere under ~/Projects/work/<repo>/...
-  if [[ "$dir" == "$base_work"* ]]; then
-    local rest="${dir#"$base_work"}"   # everything after .../work/
-    local top="${rest%%/*}"            # first path segment (repo name)
-    [[ -n "$top" ]] || { echo "Already at $base_work"; return 1; }
-    cd "$base_work$top" || return 1
-    return 0
-  fi
-
-  echo "Not inside ~/Projects/home or ~/Projects/work"
-  return 1
+  checkout_root="$(git rev-parse --show-toplevel 2>/dev/null)" || {
+    print -u2 -r -- "Not inside a Git checkout: $PWD"
+    return 1
+  }
+  builtin cd -- "$checkout_root"
 }
 
-_ad_register reporoot projects reporoot 'Go to the project directory; Change to the first directory below ~/Projects/home or ~/Projects/work.' run rr \
+_ad_register reporoot projects reporoot 'Go to the Git checkout root; Change to the root of the current repository or linked worktree.' run rr \
     'When: You are in ~/Projects/home/example/src.
-You need to change to the top directory of that project.
+The repository root is ~/Projects/home/example.
 Example:
   reporoot
 Result: The shell changes to ~/Projects/home/example.
-The function uses the first directory after ~/Projects/home/ in the path.
-It also accepts paths below ~/Projects/work/.
-It uses the directory path to find the project, without a Git command.
-If you are outside these two project paths, the function shows an error.'
+Git supplies the root path for the current checkout.
+In a linked worktree, the function returns to the root of that worktree.
+In a nested repository, it returns to the root of that repository.
+It works with Git checkouts at any location.
+
+Use rr to run the same function.
+Outside a Git checkout, the function reports an error.
+The shell keeps its current directory if Git cannot find a root.'
 
 edit-zshrc() {
     vim $HOME/.zshrc

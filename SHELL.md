@@ -53,7 +53,7 @@ or installed first; `mkcd` and `notes` create their own target directories.
 | --- | --- |
 | `home` | Pick an immediate child of `~/Projects/home` and cd into it. |
 | `work` | Linux: pick an immediate child of `~/Projects/work`. |
-| `reporoot` or `rr` | From below `~/Projects/home/<repo>` or `~/Projects/work/<repo>`, cd to that top-level project. |
+| `reporoot` or `rr` | Change to the root of the current Git checkout at any location. Linked worktrees and nested repositories use their own roots. Outside a checkout, report an error and keep the current directory. |
 | `mkcd ~/Projects/home/scratch-example` | Create the directory and cd into it. |
 | `fda ~/Projects` | Pick any directory under the supplied root (default: home). |
 | `FD_MAX_RESULTS=5000 fda --all` | Search from `/`, excluding runtime trees and limiting results. |
