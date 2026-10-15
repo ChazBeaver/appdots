@@ -63,3 +63,22 @@ Type part of a directory name to reduce the list.
 Select example with the arrow keys.
 Press Enter to change to ~/Projects/work/example.
 The function uses ~/Projects/work as a fixed path.'
+
+# open a directory in Nautilus, detached from the terminal
+open() {
+  local target="${1:-.}"
+  [[ -e "$target" ]] || {
+    echo "❌ Missing: $target"
+    return 1
+  }
+  nautilus "$target" &>/dev/null &!
+}
+
+_ad_register open apps 'open [PATH]' 'Open a path in Nautilus; Start the file manager detached and silent, at PATH or the current directory.' run '' \
+    'When: You need to browse a directory in the graphical file manager.
+Example:
+  open .
+Result: Nautilus opens the current directory in a new window.
+The terminal stays free and shows no Nautilus log messages.
+Use open PATH to open a different directory.
+Use open without arguments to open the current directory.'
