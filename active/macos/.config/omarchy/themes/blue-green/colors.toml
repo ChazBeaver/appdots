@@ -1,0 +1,32 @@
+# Teal room shadows, clear azure skies, cream clouds, sunlit leaves, and river water.
+mode = "dark"
+
+accent = "#57b8ec"
+selection = "#315868"
+muted = "#88a8ae"
+
+background = "#102629"
+dark_background = "#0b1c20"
+darker_background = "#071417"
+lighter_background = "#1d373b"
+
+foreground = "#e6f1ed"
+dark_foreground = "#afc9cb"
+light_foreground = "#f1f7ef"
+bright_foreground = "#fcfff5"
+
+red = "#d8877b"
+yellow = "#e6d396"
+orange = "#d7a575"
+green = "#a9bd68"
+cyan = "#67c4c4"
+blue = "#58aced"
+magenta = "#b99aba"
+brown = "#b5a082"
+
+bright_red = "#edaa98"
+bright_yellow = "#f4e6b4"
+bright_green = "#c5d78b"
+bright_cyan = "#91ddd5"
+bright_blue = "#88cdf5"
+bright_magenta = "#d6b9d1"
