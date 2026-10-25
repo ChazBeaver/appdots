@@ -31,3 +31,4 @@ alias k='kubectl'
 alias hr='herdr'
 # Personal
 alias rr='reporoot'
+alias hp='home-pull'

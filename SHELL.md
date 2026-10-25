@@ -6,7 +6,7 @@ commands may also use `bat` and `tree`. The startup modules source definitions
 and settings; do not execute `functions.sh`, `alias.sh`, registry, completion,
 history, environment, plugin-loader, or prompt modules with Bash.
 
-To inspect just the shared functions without triggering startup pulls:
+To inspect just the shared functions in a minimal shell:
 
 ```zsh
 zsh -f
@@ -90,6 +90,7 @@ The optional TARGET in `gmo` uses the same order.
 
 | Example | Effect |
 | --- | --- |
+| `home-pull` or `hp` | Pull installed personal repositories, which live under `~/Projects/home`. Read exported `*_DIR` paths from `~/.dotfiles-env.sh` and fast-forward clean checkouts from their upstreams. Skip missing paths, update duplicates once, and report failures while continuing. |
 | `grs ~/Projects/home` | Print clean or changes for each direct child repository, then summarize failures and skips. A clean checkout can still have unpushed commits. |
 | `grp ~/Projects/home` | Fetch/prune and fast-forward each child repository; reports failures. |
 | `grr ~/Projects/home` | Fetch/prune and rebase with autostash in each child repository. |
@@ -159,11 +160,9 @@ Previously staged changes can return as unstaged changes after `gsp`.
 Use Conventional Branch names such as `feature/my-change`,
 `bugfix/tab-shortcuts`, or `chore/update-notes`.
 
-New Herdr tabs start your normal Zsh shell, whose existing startup modules
-automatically pull/rebase appdots and wikinotes (plus hyprdots on Linux).
-That separate behavior also runs when Herdr creates worktree tabs. See
-[startup updates](MANUAL.md#startup-updates) to disable it for an entirely
-local workflow.
+New Herdr tabs start your normal Zsh shell without pulling repositories.
+Run `home-pull` (or `hp`) explicitly when you want updates to installed personal
+repositories; see [repository updates](MANUAL.md#update-installed-repositories).
 
 For a separate worktree, use Herdr: press `Ctrl+Space`, then `Ctrl+T`, and
 enter a branch name. It starts from the current branch's committed tip.
@@ -230,8 +229,7 @@ an example and its expected effect. For instance, the `gdf` explanation shows
 Ctrl-F prints the live function definition. `?` toggles a full-width preview
 below the list. For full descriptions without the picker, use `gfn --list old`.
 
-To load the updated functions and help display in an existing shell without
-running startup pulls:
+To load the updated functions and help display in an existing shell:
 
 ```zsh
 source ~/zsh_modules/shared/00-function-registry.sh
@@ -249,6 +247,7 @@ search term for `gpp`; removed names are not callable aliases.
 | `cl`; `h sync` | Clear screen; search shell history for `sync`. |
 | `..`; `...`; `....`; `.....` | Cd up 1, 2, 3, or 4 levels. |
 | `bd`; `root` | Cd to previous directory; cd home. |
+| `hp` | Run `home-pull` to pull installed personal repositories. |
 | `doc`; `pro`; `pic`; `dow`; `bak` | Cd to Documents, Projects, Pictures, Downloads, or Backups under home. |
 | `chx ./example.sh`; `chax ./example.sh` | Add execute permission for the default classes, or explicitly all users. |
 | `v`; `vim README.md`; `vimdiff README.md MANUAL.md` | Neovim on the current directory, a file, or two files in diff mode. |

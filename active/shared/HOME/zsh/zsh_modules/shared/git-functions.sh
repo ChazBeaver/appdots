@@ -1,6 +1,6 @@
 # Remove retired definitions when this module is reloaded in an existing shell.
 # Former names remain searchable in their replacement's registry entry.
-for _ad_retired_git_name in gps gbm gml gwc gwo gfh; do
+for _ad_retired_git_name in gps gbm gml gwc gwo gfh repos-update; do
   unfunction "$_ad_retired_git_name" 2>/dev/null || true
   unset "_AD_FN_GROUP[$_ad_retired_git_name]" "_AD_FN_USAGE[$_ad_retired_git_name]" \
     "_AD_FN_DESCRIPTION[$_ad_retired_git_name]" "_AD_FN_EFFECT[$_ad_retired_git_name]" \
@@ -25,6 +25,78 @@ _ad_gr_summary() {
   printf '%s: %s succeeded, %s failed, %s skipped\n' "$1" "$2" "$3" "$4"
   (( $3 == 0 ))
 }
+
+# Installed personal repositories are declared by their installers, not by
+# the current shell's inherited variables or a fixed list of checkout names.
+# Source fresh values in a subshell so aliases/exports do not affect the caller.
+home-pull() (
+  emulate -L zsh
+  (( $# == 0 )) || { print -u2 -- 'Usage: home-pull'; return 1; }
+  local env_file="${APPDOTS_ENV_FILE:-$HOME/.dotfiles-env.sh}"
+  local line name dir
+  local -a repo_names match
+  local -A seen
+  local -i mbegin mend ok=0 failed=0 skipped=0
+  [[ -r "$env_file" ]] || {
+    print -u2 -r -- "Cannot read repository registry: $env_file"
+    return 1
+  }
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    if [[ "$line" =~ '^[[:space:]]*export[[:space:]]+([A-Za-z_][A-Za-z0-9_]*_DIR)=' ]]; then
+      repo_names+=("${match[1]}")
+    fi
+  done < "$env_file"
+  (( ${#repo_names} )) || {
+    print -u2 -r -- "No exported repository paths (*_DIR) in $env_file"
+    return 1
+  }
+  source "$env_file" || {
+    print -u2 -r -- "Cannot load repository registry: $env_file"
+    return 1
+  }
+  for name in "${repo_names[@]}"; do
+    dir="${(P)name}"
+    if [[ -z "$dir" || ! -d "$dir" || ! -e "$dir/.git" ]]; then
+      print -r -- "Skipping $name: ${dir:-<empty>} (missing Git checkout)."
+      (( ++skipped ))
+      continue
+    fi
+    dir="${dir:A}"
+    [[ -z "${seen[$dir]:-}" ]] || continue
+    seen[$dir]=1
+    print -r -- "[$name: $dir]"
+    if ! _ad_gb_clean "$dir"; then
+      (( ++failed ))
+      continue
+    fi
+    if ! git -C "$dir" symbolic-ref --quiet HEAD >/dev/null; then
+      print -u2 -r -- "Detached HEAD: $dir. Switch to a branch before updating."
+      (( ++failed ))
+      continue
+    fi
+    if git -C "$dir" -c merge.autoStash=false pull --ff-only --no-rebase --no-autostash; then
+      (( ++ok ))
+    else
+      print -u2 -r -- "Update failed: $dir. Inspect git status and the branch upstream."
+      (( ++failed ))
+    fi
+  done
+  _ad_gr_summary home-pull "$ok" "$failed" "$skipped"
+)
+_ad_register home-pull git/repos home-pull 'Pull personal repos; Read ~/.dotfiles-env.sh and fast-forward each clean checkout from its configured upstream.' run 'hp repos-update' \
+    'When: You want updates from another machine in your installed personal repos.
+Example:
+  home-pull
+Result: The function reads exported *_DIR paths from ~/.dotfiles-env.sh.
+Personal repositories live under ~/Projects/home; hp is the short alias.
+It updates each checkout once, using the current branch and its upstream.
+Only fast-forward pulls are allowed; local commits are never rebased.
+Missing checkouts are skipped, and other failures do not stop later updates.
+Dirty checkouts, detached HEADs, and unfinished Git operations need attention.
+The final summary counts successes, failures, and missing checkouts.
+The command returns nonzero if any checkout failed or could not be updated.
+It does not run repository installers or sync scripts.
+Zsh startup only defines the function; run it explicitly to update.'
 
 # Stage, commit when needed, then push. A clean checkout can still have
 # unpushed commits, including a commit left behind by a previous push failure.

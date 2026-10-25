@@ -271,7 +271,14 @@ integration is skipped. After installing the agent, run the system script direct
 `bootstrap.sh` creates or repairs `APP_DOTS_DIR` and the `appdots` alias in
 `~/.dotfiles-env.sh` before any bootstrap stage runs. `sync.sh` converges the
 same file on later runs. This file is shared with hyprdots so both repos can
-filter each other's package declarations from drift reports.
+filter each other's package declarations from drift reports. Each personal
+repo's installer registers its checkout with an exported `*_DIR` path here;
+these entries are the installed-repository registry used by `home-pull`.
+
+Personal repositories live at `~/Projects/home/<repo>` on every machine.
+Only a subset may be installed; `~/.dotfiles-env.sh` records that installed
+set. [ADR-0001](docs/adr/0001-personal-repository-layout.md) records the
+directory convention and registry decision.
 
 Make sure it's sourced in your shell rc:
 
@@ -315,6 +322,7 @@ operates across child repositories, and other Git operations use a compact
 | `dirgcm` | `grc` | Commit and push child repositories |
 | `dirgpull` | `grp` | Fast-forward child repositories |
 | `dirgpullr` | `grr` | Rebase child repositories |
+| `repos-update` | `home-pull` (`hp`) | Pull installed personal repositories |
 | `gbra` | `grs` | Audit child repository status |
 | `gps`, `gpush` | `gpp` | Push the current branch |
 | `gpull` | `gpl` | Pull the current branch |
@@ -333,15 +341,19 @@ intentionally no longer callable.
 
 ---
 
-## 🔄 Auto Git Pull
+## 🔄 Update Installed Repositories
 
-Zsh loads `shared/personal-repos-pull.sh` from its managed modules on each new
-terminal session, pulling appdots and wikinotes with `git pull --rebase`.
-On Linux it also loads `linux/hyprdots-pull.sh`, which pulls hyprdots. These
-scripts use the fixed paths under `~/Projects/home/`; they do not run sync.
+Run `home-pull` (or `hp`, for "home pull") in Zsh to update the repositories
+registered in `~/.dotfiles-env.sh`. It reloads the file on every invocation,
+discovers its exported `*_DIR` paths, and fast-forwards each clean checkout
+from the current branch's configured upstream. Duplicate paths are updated once; missing
+checkouts are skipped. Failures are reported without stopping later updates,
+and the command returns nonzero if any repository needs attention.
 
-See [manual startup updates](MANUAL.md#startup-updates) for standalone runs
-and reversible disable/enable examples.
+Opening a terminal no longer pulls repositories. `home-pull` does not
+stash changes, rebase commits, or run installers/sync scripts. See
+[manual repository updates](MANUAL.md#update-installed-repositories) for use
+and recovery, or find it with `fn home-pull` / `gfn home-pull`.
 
 ---
 

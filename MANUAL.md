@@ -69,6 +69,8 @@ formulae using stub package managers. The theme suite checks missing coverage,
 intentional palette differences, failed rendering, and operation without Omarchy.
 The Git suites exercise local branches, merges, cleanup, searchable help, and
 bulk repository failures in disposable repositories and worktrees.
+`bash tests/personal-repos.sh` checks installed-repository discovery, upstream
+tracking, fast-forward behavior, and failures without touching personal repos.
 The Herdr suite uses a fake CLI to check tab setup without touching a live
 session; it needs Python 3.11+ for TOML parsing.
 
@@ -312,33 +314,44 @@ For a stock theme, copy from `/usr/share/omarchy/themes/<slug>/colors.toml`
 instead. Changes to the upstream resolver/templates alone do not count as
 drift; update those deliberately only when needed for palette compatibility.
 
-## Startup updates
+## Update installed repositories
 
-These scripts pull fixed checkouts and can fail on local changes. Run them
-manually only when you want to fetch/rebase those repositories:
+Open a new Zsh terminal after updating appdots, then run:
 
-```bash
-cd ~/Projects/home/appdots
-bash active/shared/HOME/zsh/zsh_modules/shared/personal-repos-pull.sh
-# Linux only:
-bash active/shared/HOME/zsh/zsh_modules/linux/hyprdots-pull.sh
+```zsh
+home-pull
+# Or use the short alias: hp
 ```
 
-The first updates appdots and wikinotes; the second updates hyprdots. Neither
-syncs installed files, and their final success message does not mean every
-pull succeeded: read any per-repository warnings.
+For an existing Zsh session, load the new definition first:
 
-To disable both automatic startup pulls on Linux (only the first on macOS):
-
-```bash
-mv active/shared/HOME/zsh/zsh_modules/shared/personal-repos-pull.sh active/shared/HOME/zsh/zsh_modules/shared/personal-repos-pull.sh.bak
-mv active/shared/HOME/zsh/zsh_modules/linux/hyprdots-pull.sh active/shared/HOME/zsh/zsh_modules/linux/hyprdots-pull.sh.bak
+```zsh
+source "$APP_DOTS_DIR/active/shared/HOME/zsh/zsh_modules/shared/alias.sh"
+source "$APP_DOTS_DIR/active/shared/HOME/zsh/zsh_modules/shared/git-functions.sh"
+hp
 ```
 
-Restore each name by reversing the corresponding `mv`. Zsh loads only
-`*.sh`, and the module directory is already linked, so the next shell picks
-up the change. These renames are repository changes; review them before
-making them permanent.
+Personal repositories live at `~/Projects/home/<repo>` on every machine;
+[ADR-0001](docs/adr/0001-personal-repository-layout.md) records this convention.
+`home-pull` is also available as `hp` ("home pull").
+`~/.dotfiles-env.sh` is the source of installed repositories. Each installer
+writes an `export NAME_DIR="$HOME/Projects/home/<repo>"` entry; aliases are ignored.
+The command reloads this file on every invocation, so repositories registered
+after the shell opened are included. No fixed repository names or parent
+directory scan is used. Missing checkouts are reported as skipped, and
+duplicate paths (including symlinks) are updated once.
+
+Each clean checkout pulls its current branch's configured upstream with
+`--ff-only --no-rebase --no-autostash`. Dirty worktrees (including untracked
+files), detached HEADs, unfinished Git operations, missing upstreams, and
+failed pulls count as failures. Other repositories are still processed;
+the final summary gives success/failure/skip counts, and any failure makes
+the command return nonzero. Check `git status` and `git branch -vv` in a
+failed checkout, resolve its local work or upstream configuration, and retry.
+
+The former automatic startup pulls have been removed on both Linux and macOS.
+This command only updates Git checkouts. After reviewing incoming changes,
+run the affected repository's own sync/install script and doctor as needed.
 
 ## Git guard and application shortcuts
 
