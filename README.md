@@ -60,6 +60,10 @@ Renames any real (non-symlink) files that sync would replace, appending `.bak`. 
 
 ## 🔍 Diagnostics
 
+Run all regression fixtures with `./test.sh`. The runner uses isolated test
+data; it does not install packages or apply configuration to the desktop.
+See [the manual](MANUAL.md#install-update-and-diagnose) for individual suites.
+
 ```bash
 ./doctor.sh
 ```
@@ -376,6 +380,7 @@ appdots/
 ├── backup.sh            # Back up before sync
 ├── bootstrap.sh         # Cold-boot: backup + packages + system + sync
 ├── doctor.sh            # Run all diagnostics
+├── test.sh              # Run all isolated regression suites
 └── sync.sh              # Symlink sync (run after git pull)
 ```
 

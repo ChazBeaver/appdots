@@ -7,10 +7,11 @@ scopes; this file covers only what an agent must do differently here.
 
 ## Boundaries
 
-- Only files under `active/<scope>/` and `bin/<scope>/` are owned here, and
-  each is mirrored to a fixed place in `$HOME` (see README "Scopes"). Do not
-  add Hyprland or Omarchy config (hyprdots owns it) or agent skills and
-  instructions (agentdots owns them).
+- Managed application configs live under `active/<scope>/` and `bin/<scope>/`
+  and map to fixed places in `$HOME` (see README "Scopes"). Installer code,
+  tests, and documentation support those scopes. Hyprland and Omarchy config
+  belong to hyprdots; global agent rules and portable skills belong to
+  agentdots. Repository procedures belong in `.agents/skills/`.
 - Never commit secrets, credentials, browser or password-manager state, or
   shell history. `.gitignore` already lists the known ones; extend it before
   adding a new config directory.
@@ -20,9 +21,13 @@ scopes; this file covers only what an agent must do differently here.
 ## Verify every change
 
 ```bash
+./test.sh       # run every isolated regression fixture; no desktop changes
 ./sync.sh       # relink after adding, moving, or renaming a managed file
 ./doctor.sh     # symlinks, packages, login shell; must end with "All checks passed"
 ```
+
+`MANUAL.md` describes the individual suites and diagnostic checks. Fixture
+tests validate behavior in isolation; doctor checks the installed machine.
 
 `bootstrap.sh` is for a fresh machine only; `system/` scripts run from it
 and never from sync. Do not run bootstrap to test a change.

@@ -31,10 +31,9 @@ fi
 overall=0
 for check in "$DOCTOR_DIR"/*.sh; do
   [ -f "$check" ] || continue
-  chmod +x "$check" 2>/dev/null || true
   echo
   log_step "Running: $(basename "$check")"
-  if ! "$check"; then
+  if ! bash "$check"; then
     overall=1
   fi
 done

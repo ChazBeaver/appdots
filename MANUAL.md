@@ -54,15 +54,15 @@ broken. Presence checks include packages installed as dependencies; extra
 package checks use the narrower top-level package set and filter Omarchy and
 Hyprdots ownership. Review the declared intent before installing anything.
 
-Run the regression fixtures without installing packages or changing the desktop:
+Run every regression fixture without installing packages or changing the desktop:
 
 ```bash
-bash tests/packages.sh
-bash tests/themes.sh
-bash tests/git-local.sh
-bash tests/git-tools.sh
-bash tests/herdr-workspace.sh
+./test.sh
 ```
+
+The runner discovers `tests/*.sh`, runs each script separately, continues
+after failures, and returns nonzero if any suite fails. For a focused check,
+run a suite directly, for example `bash tests/packages.sh`.
 
 The package suite checks Linux ownership/presence and Homebrew non-leaf
 formulae using stub package managers. The theme suite checks missing coverage,
