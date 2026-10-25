@@ -32,3 +32,6 @@ alias hr='herdr'
 # Personal
 alias rr='reporoot'
 alias hp='home-pull'
+alias ht='home-status'
+alias hs='home-sync'
+alias hd='home-doctor'

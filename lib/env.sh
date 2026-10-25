@@ -1,30 +1,48 @@
 #!/usr/bin/env bash
-# Persistent appdots environment helpers. Source this file; do not execute it.
+# Persistent repository registration. Source this file; do not execute it.
 
 ensure_appdots_env() {
   local repo_dir="$1"
-  local env_file="$HOME/.dotfiles-env.sh"
-  local escaped_repo_dir
-  local expected_export="export APP_DOTS_DIR=\"$repo_dir\""
-
-  mkdir -p "$(dirname "$env_file")"
-  [[ -e "$env_file" ]] || touch "$env_file"
-
+  # An explicit registry path lets fixtures avoid the real home directory.
+  local env_file="${2:-$HOME/.dotfiles-env.sh}"
+  local escaped_repo_dir temporary
   escaped_repo_dir="${repo_dir//\\/\\\\}"
-  escaped_repo_dir="${escaped_repo_dir//|/\\|}"
-  escaped_repo_dir="${escaped_repo_dir//&/\\&}"
+  escaped_repo_dir="${escaped_repo_dir//\"/\\\"}"
+  escaped_repo_dir="${escaped_repo_dir//\$/\\\$}"
+  escaped_repo_dir="${escaped_repo_dir//\`/\\\`}"
+  local expected_export="export APP_DOTS_DIR=\"$escaped_repo_dir\""
+  local expected_alias='alias appdots="cd \$APP_DOTS_DIR"'
 
-  if grep -Fqx "$expected_export" "$env_file"; then
-    :
-  elif grep -q '^export APP_DOTS_DIR=' "$env_file"; then
-    sed -i "s|^export APP_DOTS_DIR=.*|export APP_DOTS_DIR=\"$escaped_repo_dir\"|" "$env_file"
-  else
-    printf 'export APP_DOTS_DIR="%s"\n' "$repo_dir" >> "$env_file"
+  mkdir -p -- "$(dirname -- "$env_file")/Projects/home" || return 1
+  [[ -e "$env_file" ]] || touch -- "$env_file" || return 1
+  temporary="$(mktemp "${env_file}.XXXXXX")" || return 1
+  # ENVIRON preserves literal backslashes; awk -v would interpret them.
+  if ! DOTFILES_REGISTER_EXPORT="$expected_export" \
+       DOTFILES_REGISTER_ALIAS="$expected_alias" awk '
+    BEGIN {
+      desired_export = ENVIRON["DOTFILES_REGISTER_EXPORT"]
+      desired_alias = ENVIRON["DOTFILES_REGISTER_ALIAS"]
+    }
+    $0 ~ /^[[:space:]]*export[[:space:]]+APP_DOTS_DIR=/ {
+      if (!seen_export++) print desired_export
+      next
+    }
+    $0 ~ /^[[:space:]]*alias[[:space:]]+appdots=/ {
+      if (!seen_alias++) print desired_alias
+      next
+    }
+    { print }
+    END {
+      if (!seen_export) print desired_export
+      if (!seen_alias) print desired_alias
+    }
+  ' "$env_file" > "$temporary"; then
+    rm -f -- "$temporary"
+    return 1
   fi
-
-  if ! grep -q '^alias appdots=' "$env_file"; then
-    printf '%s\n' 'alias appdots="cd \$APP_DOTS_DIR"' >> "$env_file"
+  if ! mv -- "$temporary" "$env_file"; then
+    rm -f -- "$temporary"
+    return 1
   fi
-
   export APP_DOTS_DIR="$repo_dir"
 }

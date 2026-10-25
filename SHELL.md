@@ -52,6 +52,8 @@ or installed first; `mkcd` and `notes` create their own target directories.
 | Example | Result/prerequisite |
 | --- | --- |
 | `home` | Pick an immediate child of `~/Projects/home` and cd into it. |
+| `home-sync` or `hs` | Run each registered checkout's `./sync.sh` from its root. Apply checked-out config, including uncommitted edits; skip missing scripts and continue after failures. |
+| `home-doctor` or `hd` | Run each registered checkout's `./doctor.sh` from its root. Skip missing scripts, check every available repo, and return nonzero if any doctor fails. |
 | `work` | Linux: pick an immediate child of `~/Projects/work`. |
 | `reporoot` or `rr` | Change to the root of the current Git checkout at any location. Linked worktrees and nested repositories use their own roots. Outside a checkout, report an error and keep the current directory. |
 | `mkcd ~/Projects/home/scratch-example` | Create the directory and cd into it. |
@@ -91,6 +93,7 @@ The optional TARGET in `gmo` uses the same order.
 | Example | Effect |
 | --- | --- |
 | `home-pull` or `hp` | Pull installed personal repositories, which live under `~/Projects/home`. Read exported `*_DIR` paths from `~/.dotfiles-env.sh` and fast-forward clean checkouts from their upstreams. Skip missing paths, update duplicates once, and report failures while continuing. |
+| `home-status` or `ht` | Print Git branch/upstream, cached ahead/behind counts, and staged/unstaged/untracked changes for each registered checkout. No fetching or index refresh; a dirty checkout is a successful report. |
 | `grs ~/Projects/home` | Print clean or changes for each direct child repository, then summarize failures and skips. A clean checkout can still have unpushed commits. |
 | `grp ~/Projects/home` | Fetch/prune and fast-forward each child repository; reports failures. |
 | `grr ~/Projects/home` | Fetch/prune and rebase with autostash in each child repository. |
@@ -248,6 +251,8 @@ search term for `gpp`; removed names are not callable aliases.
 | `..`; `...`; `....`; `.....` | Cd up 1, 2, 3, or 4 levels. |
 | `bd`; `root` | Cd to previous directory; cd home. |
 | `hp` | Run `home-pull` to pull installed personal repositories. |
+| `ht` | Run `home-status` to inspect registered repositories without fetching. |
+| `hs`; `hd` | Run `home-sync` to apply configuration; run `home-doctor` to check installed configuration. |
 | `doc`; `pro`; `pic`; `dow`; `bak` | Cd to Documents, Projects, Pictures, Downloads, or Backups under home. |
 | `chx ./example.sh`; `chax ./example.sh` | Add execute permission for the default classes, or explicitly all users. |
 | `v`; `vim README.md`; `vimdiff README.md MANUAL.md` | Neovim on the current directory, a file, or two files in diff mode. |

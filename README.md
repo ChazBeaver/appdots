@@ -27,6 +27,7 @@ repairs, installed helpers, shell functions, aliases, and their prerequisites.
 ### Fresh machine (first time)
 
 ```bash
+mkdir -p ~/Projects/home
 git clone <repo-url> ~/Projects/home/appdots
 cd ~/Projects/home/appdots
 ./bootstrap.sh
@@ -280,6 +281,12 @@ Only a subset may be installed; `~/.dotfiles-env.sh` records that installed
 set. [ADR-0001](docs/adr/0001-personal-repository-layout.md) records the
 directory convention and registry decision.
 
+Bootstrap and sync create `~/Projects/home` if needed and create or repair
+only this repo's `APP_DOTS_DIR` export and `appdots` alias in the registry.
+They remove duplicate entries for those keys and preserve other repos'
+entries. Create the parent before cloning, as shown in Quick Start; these
+scripts register their current checkout and do not move it.
+
 Make sure it's sourced in your shell rc:
 
 ```bash
@@ -354,6 +361,22 @@ Opening a terminal no longer pulls repositories. `home-pull` does not
 stash changes, rebase commits, or run installers/sync scripts. See
 [manual repository updates](MANUAL.md#update-installed-repositories) for use
 and recovery, or find it with `fn home-pull` / `gfn home-pull`.
+
+After reviewing configuration changes, use `home-sync` (`hs`) to run each
+installed repository's `./sync.sh`. Use `home-doctor` (`hd`) to run each
+repository's `./doctor.sh` and check the installed machine. Both use the same
+registry as `home-pull`, run from each repository root in registry order,
+skip missing checkouts/scripts, and continue after failures. Any failed
+script makes the command return nonzero; the summary counts all results.
+Sync applies checked-out files, including uncommitted changes, and can reload
+the desktop. These helpers do not pull or substitute installers for missing
+scripts. Find them with `fn home-sync` / `fn home-doctor`.
+
+Use `home-status` (`ht`) to inspect all registered checkouts without fetching.
+It prints each branch and upstream, cached ahead/behind counts, and staged,
+unstaged, and untracked file changes. Dirty and detached checkouts are valid
+reports; unreadable/broken repositories count as failures, and later repos
+are still checked. Run it before pulling or applying configuration changes.
 
 ---
 

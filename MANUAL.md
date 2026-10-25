@@ -70,7 +70,10 @@ intentional palette differences, failed rendering, and operation without Omarchy
 The Git suites exercise local branches, merges, cleanup, searchable help, and
 bulk repository failures in disposable repositories and worktrees.
 `bash tests/personal-repos.sh` checks installed-repository discovery, upstream
-tracking, fast-forward behavior, and failures without touching personal repos.
+tracking, fast-forward behavior, sync/doctor script execution, and failures
+without touching personal repos. It also checks cached Git status reports.
+`bash tests/env.sh` checks parent-directory creation and idempotent registry
+repair, including duplicate entries and literal checkout paths.
 The Herdr suite uses a fake CLI to check tab setup without touching a live
 session; it needs Python 3.11+ for TOML parsing.
 
@@ -352,6 +355,45 @@ failed checkout, resolve its local work or upstream configuration, and retry.
 The former automatic startup pulls have been removed on both Linux and macOS.
 This command only updates Git checkouts. After reviewing incoming changes,
 run the affected repository's own sync/install script and doctor as needed.
+
+Inspect the registered repositories before updating them:
+
+```zsh
+home-status      # or ht
+```
+
+Each report uses `git status --short --branch --ahead-behind`: the `##` line
+shows the branch, upstream, and available ahead/behind counts. Following lines
+show staged, unstaged, and untracked files; no file lines means clean.
+Counts use cached remote references, so they may lag changes on another
+machine until a fetch or pull. This command does not fetch, refresh the index,
+or create directories. Dirty, detached, and unborn branches can be reported
+successfully. Missing checkouts are skipped; broken repositories fail without
+stopping later reports. The summary counts reports, failures, and skips.
+
+To apply configuration or check the installed machine across registered repos:
+
+```zsh
+home-sync        # or hs: run each available ./sync.sh
+home-doctor      # or hd: run each available ./doctor.sh
+```
+
+These commands use the same registry discovery as `home-pull`. Each script
+runs directly from its own checkout in a separate process, in registry order.
+Duplicate checkout paths run once. Missing checkouts or scripts are skipped;
+an existing script without execute permission is a failure. All other scripts
+still run after a failure, and the final summary counts successes, failures,
+and skips. Any failed script makes the command return nonzero.
+
+Sync applies the current checkout, including uncommitted configuration edits.
+Each repository controls its own sync effects: appdots relinks application
+configs, hyprdots reconciles configuration/themes/plugins and may reload the
+desktop, and agentdots updates installed skills and global instructions.
+Doctor runs the repositories' existing read-only diagnostics and reports
+drift. These helpers do not pull, invoke `sudo` themselves, or substitute
+`install.sh`/`bootstrap.sh` for missing scripts. Wikinotes currently has
+neither script and is skipped by both helpers; run its installer separately
+when its registration needs repair. All helpers require explicit invocation.
 
 ## Git guard and application shortcuts
 
