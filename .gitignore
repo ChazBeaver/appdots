@@ -1,7 +1,4 @@
 # Ignore file with local/personal address within the configuration
-active/macos/.config/nvim/lua/plugins/vimwiki.lua
-active/shared/.config/nvim/lua/plugins/vimwiki.lua
-active/linux/.config/nvim/lua/plugins/vimwiki.lua
 active/shared/.config/nvim/lua/plugins/lualine.lua
 active/shared/.config/nvim/lua/plugins/rose-pine-theme.lua
 active/shared/.config/nvim/lua/plugins/kanagawa-theme.lua
