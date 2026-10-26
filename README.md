@@ -103,6 +103,31 @@ hands off to zsh if a terminal starts Bash before its launch configuration has
 converged. An already-running shell process must be restarted once; all later
 interactive sessions enter zsh automatically.
 
+### Zsh modules
+
+`~/.zshrc` loads `~/.dotfiles-env.sh` once, then sources `shared/*.sh`
+alphabetically, followed by the current OS's `linux/*.sh` or `macos/*.sh`.
+The module tree lives at `active/shared/HOME/zsh/zsh_modules/` and is linked
+to `~/zsh_modules`.
+
+| Module | Responsibility |
+| --- | --- |
+| `shared/00-function-registry.sh` | Function registration and the `fn` command palette; loads first. |
+| `shared/git-core.sh` | Common Git safeguards, push/pull/stash commands, recent-commit diffs, and `gfn`. |
+| `shared/git-branches.sh` | Branch creation, selection, review, merging, and cleanup. |
+| `shared/git-repos.sh` | `gr*` operations on direct child repositories of a directory. |
+| `shared/home-repos.sh` | `home-*` maintenance of installed repositories from `~/.dotfiles-env.sh`. |
+| `shared/functions.sh` | General navigation, application, and utility functions. |
+| `shared/fzf.sh` | Fuzzy finder settings, file/directory pickers, and history search. |
+| Other shared modules | Aliases, editor/terminal defaults, history settings, and the prompt. |
+| `linux/` and `macos/` | Platform-specific functions, aliases, environment, and plugins. |
+
+Each public function keeps its `_ad_register` help immediately beside its
+definition. Git and home modules share safeguards from `git-core.sh`; they
+define commands at startup and perform repository operations only when called.
+The `home-*` commands deliberately reread the repository registry on each call.
+See [the shell reference](SHELL.md) for inspection and reload examples.
+
 ### bin/
 
 Scripts in `bin/` are symlinked into `~/.local/bin/` with `.sh` stripped from the name, making them available as bare commands:

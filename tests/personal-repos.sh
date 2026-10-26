@@ -28,7 +28,8 @@ repos-update() { fail 'Retired repos-update definition was called'; }
 _ad_register repos-update git/repos repos-update 'Old updater.' run
 git() { fail 'Sourcing Git helpers invoked Git'; }
 source "$APPDOTS_TEST_REPO/active/shared/HOME/zsh/zsh_modules/shared/alias.sh"
-source "$APPDOTS_TEST_REPO/active/shared/HOME/zsh/zsh_modules/shared/git-functions.sh"
+source "$APPDOTS_TEST_REPO/active/shared/HOME/zsh/zsh_modules/shared/git-core.sh"
+source "$APPDOTS_TEST_REPO/active/shared/HOME/zsh/zsh_modules/shared/home-repos.sh"
 unfunction git
 for module in shared/personal-repos-pull.sh linux/hyprdots-pull.sh; do
   [[ ! -e "$APPDOTS_TEST_REPO/active/shared/HOME/zsh/zsh_modules/$module" ]] || fail "Startup pull still installed: $module"

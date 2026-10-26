@@ -34,33 +34,6 @@ Select appdots with the arrow keys.
 Press Enter to change to ~/Projects/home/appdots.
 The function uses ~/Projects/home as a fixed path.'
 
-# work() {
-#   local base="$HOME/Projects/work"
-#   local choice
-#
-#   [[ -d "$base" ]] || { echo "❌ Missing: $base"; return 1; }
-#
-#   # Collect directories one and two levels below $base
-#   choice="$(
-#     {
-#       # level 1: immediate children
-#       find "$base" -mindepth 1 -maxdepth 1 -type d 2>/dev/null
-#       # level 2: children of immediate children
-#       find "$base" -mindepth 2 -maxdepth 2 -type d 2>/dev/null
-#     } \
-#       | sed "s|^$base/||" \
-#       | sort \
-#       | fzf \
-#           --height 60% \
-#           --reverse \
-#           --prompt='work> ' \
-#           --preview 'ls -la --color=always "$HOME/Projects/work/{}" | sed -n "1,120p"'
-#   )" || return 0
-#
-#   cd "$base/$choice" || return 1
-# }
-#
-
 cx() {
   local prev=$PWD
   cd ~/.codex && codex
@@ -133,27 +106,6 @@ The shell then changes to that directory.
 If the directory already exists, the shell changes to it.
 If mkdir fails, the shell stays in the original directory.
 Use quotes for a path with spaces, for example: mkcd "example project".'
-
-# Search History using FZF
-fh() {
-  local cmd
-  cmd=$(fc -lnr 1 | fzf --tac) || return
-  print -z -- "$cmd"
-}
-
-_ad_register fh fzf fh 'Find a history command; Search the current shell history and put the selected command at the prompt.' view hf \
-    'When: You need to find a command in the history of the current shell.
-Example:
-  fh
-Result: The function reads the shell history and opens the fzf picker.
-Type part of the command to reduce the list.
-Select a command with the arrow keys.
-Press Enter to put the selected command at the shell prompt.
-Check the command before you run it.
-
-Press Ctrl-Y to copy the selected command to the clipboard.
-The picker stays open after the copy.
-Press Esc to close the picker without a selection.'
 
 # Yazi launch and Change Directory when closed
 y() {

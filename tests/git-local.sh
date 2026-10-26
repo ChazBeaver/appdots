@@ -15,7 +15,8 @@ set -eu
 setopt pipefail
 source "$APPDOTS_TEST_REPO/lib/log.sh"
 source "$APPDOTS_TEST_REPO/active/shared/HOME/zsh/zsh_modules/shared/00-function-registry.sh"
-source "$APPDOTS_TEST_REPO/active/shared/HOME/zsh/zsh_modules/shared/git-functions.sh"
+source "$APPDOTS_TEST_REPO/active/shared/HOME/zsh/zsh_modules/shared/git-core.sh"
+source "$APPDOTS_TEST_REPO/active/shared/HOME/zsh/zsh_modules/shared/git-branches.sh"
 fail() { log_err "$*"; exit 1; }
 reject() {
   if "$@" > "$APPDOTS_TEST_ROOT/rejected" 2>&1; then

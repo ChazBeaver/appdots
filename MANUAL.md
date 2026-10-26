@@ -72,6 +72,9 @@ bulk repository failures in disposable repositories and worktrees.
 `bash tests/personal-repos.sh` checks installed-repository discovery, upstream
 tracking, fast-forward behavior, sync/doctor script execution, and failures
 without touching personal repos. It also checks cached Git status reports.
+`bash tests/zsh-modules.sh` exercises the actual startup file with isolated
+homes and simulated Linux/macOS detection, checking one registry load per
+startup, function/alias discovery, reloads, and absence of startup Git work.
 `bash tests/env.sh` checks parent-directory creation and idempotent registry
 repair, including duplicate entries and literal checkout paths.
 The Herdr suite uses a fake CLI to check tab setup without touching a live
@@ -329,8 +332,10 @@ home-pull
 For an existing Zsh session, load the new definition first:
 
 ```zsh
+source "$APP_DOTS_DIR/active/shared/HOME/zsh/zsh_modules/shared/00-function-registry.sh"
 source "$APP_DOTS_DIR/active/shared/HOME/zsh/zsh_modules/shared/alias.sh"
-source "$APP_DOTS_DIR/active/shared/HOME/zsh/zsh_modules/shared/git-functions.sh"
+source "$APP_DOTS_DIR/active/shared/HOME/zsh/zsh_modules/shared/git-core.sh"
+source "$APP_DOTS_DIR/active/shared/HOME/zsh/zsh_modules/shared/home-repos.sh"
 hp
 ```
 

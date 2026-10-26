@@ -12,7 +12,11 @@ To inspect just the shared functions in a minimal shell:
 zsh -f
 source ~/Projects/home/appdots/active/shared/HOME/zsh/zsh_modules/shared/00-function-registry.sh
 source ~/Projects/home/appdots/active/shared/HOME/zsh/zsh_modules/shared/functions.sh
-source ~/Projects/home/appdots/active/shared/HOME/zsh/zsh_modules/shared/git-functions.sh
+for module in ~/Projects/home/appdots/active/shared/HOME/zsh/zsh_modules/shared/git-*.sh \
+              ~/Projects/home/appdots/active/shared/HOME/zsh/zsh_modules/shared/home-repos.sh; do
+  source "$module"
+done
+unset module
 source ~/Projects/home/appdots/active/shared/HOME/zsh/zsh_modules/shared/fzf.sh
 fn --list
 ```
@@ -236,9 +240,13 @@ To load the updated functions and help display in an existing shell:
 
 ```zsh
 source ~/zsh_modules/shared/00-function-registry.sh
-source ~/zsh_modules/shared/git-functions.sh
+for module in ~/zsh_modules/shared/git-*.sh ~/zsh_modules/shared/home-repos.sh; do
+  source "$module"
+done
+unset module
 ```
 
+The loop loads shared Git safeguards along with all Git and home workflows.
 Reloading preserves other registered functions and removes retired `gps`,
 `gbm`, `gml`, `gwc`, and `gwo` definitions from the shell. `gps` remains a
 search term for `gpp`; removed names are not callable aliases.

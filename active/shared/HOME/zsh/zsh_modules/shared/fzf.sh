@@ -86,3 +86,24 @@ The list excludes paths that contain a hidden directory.
 Select the example directory with the arrow keys.
 Press Enter to change to that directory.
 Use fcd without a path to search the current directory.'
+
+# Search History using FZF
+fh() {
+  local cmd
+  cmd=$(fc -lnr 1 | fzf --tac) || return
+  print -z -- "$cmd"
+}
+
+_ad_register fh fzf fh 'Find a history command; Search the current shell history and put the selected command at the prompt.' view hf \
+    'When: You need to find a command in the history of the current shell.
+Example:
+  fh
+Result: The function reads the shell history and opens the fzf picker.
+Type part of the command to reduce the list.
+Select a command with the arrow keys.
+Press Enter to put the selected command at the shell prompt.
+Check the command before you run it.
+
+Press Ctrl-Y to copy the selected command to the clipboard.
+The picker stays open after the copy.
+Press Esc to close the picker without a selection.'

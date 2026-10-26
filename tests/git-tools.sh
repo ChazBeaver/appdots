@@ -15,9 +15,10 @@ set -eu
 setopt pipefail
 source "$APPDOTS_TEST_REPO/lib/log.sh"
 registry="$APPDOTS_TEST_REPO/active/shared/HOME/zsh/zsh_modules/shared/00-function-registry.sh"
-module="$APPDOTS_TEST_REPO/active/shared/HOME/zsh/zsh_modules/shared/git-functions.sh"
+module_root="$APPDOTS_TEST_REPO/active/shared/HOME/zsh/zsh_modules/shared"
+git_modules=( "$module_root"/git-*.sh "$module_root/home-repos.sh" )
 source "$registry"
-source "$module"
+for module in "${git_modules[@]}"; do source "$module"; done
 fail() { log_err "$*"; exit 1; }
 reject() {
   if "$@" > "$APPDOTS_TEST_ROOT/rejected" 2>&1; then fail "Unexpected success: $*"; fi
@@ -69,7 +70,7 @@ _ad_register gfh git/help gfh 'Old Git function finder.' view
 _AD_FN_OWNED=()
 source "$registry"
 _ad_fn_owned gpp || fail 'registry reload did not restore an owned function'
-source "$module"
+for module in "${git_modules[@]}"; do source "$module"; done
 [[ -n "${_AD_FN_DESCRIPTION[sample_function]:-}" ]] || fail 'registry reload lost other functions'
 _ad_fn_owned sample_function && fail 'function from outside appdots was marked as owned'
 for name in gps gwc gwo gml gbm gfh; do
@@ -171,7 +172,7 @@ FOREIGN_ZSH
 ) || fail 'fn ownership check failed'
 snapshots=( "$APPDOTS_TEST_ROOT"/appdots-functions.*(N) )
 (( ${#snapshots} == 0 )) || fail 'picker left temporary snapshots behind'
-source "$module"
+for module in "${git_modules[@]}"; do source "$module"; done
 export PATH="$test_path_before"
 python3 - <<'PY'
 import json
