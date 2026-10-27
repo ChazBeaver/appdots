@@ -13,7 +13,7 @@
 # Upgrade procedure: see README → "Herdr agent integrations".
 
 HERDR_INTEGRATIONS=(
-  "claude=8"
+  "claude=10"
   "codex=8"
-  "opencode=10"
+  "opencode=12"
 )
