@@ -22,6 +22,9 @@ repairs, installed helpers, shell functions, aliases, and their prerequisites.
 
 ---
 
+For automated new-machine setup, use [`install.sh --non-interactive`](INSTALL.md).
+The contract documents prerequisite checks, private logs, failures, and recovery.
+
 ## 🚀 Quick Start
 
 ### Fresh machine (first time)

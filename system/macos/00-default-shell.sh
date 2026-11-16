@@ -3,12 +3,17 @@ set -euo pipefail
 # appdots/system/macos/00-default-shell.sh
 # Set zsh as the default login shell.
 
-account_user="${USER:-$(id -un)}"
+account_user="$(id -un)"
 current_shell="$(dscl . -read "/Users/$account_user" UserShell | awk '{print $2}')"
 
 if [[ "$current_shell" == */zsh ]]; then
   echo "✓ zsh is already the default shell"
   exit 0
+fi
+
+if [[ "${DOTFILES_NONINTERACTIVE:-0}" == 1 ]]; then
+  echo 'Set zsh as the login shell before unattended macOS installation.' >&2
+  exit 4
 fi
 
 if ! command -v zsh >/dev/null 2>&1; then

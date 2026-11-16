@@ -3,7 +3,7 @@ set -euo pipefail
 # appdots/system/linux/10-default-shell.sh
 # Set zsh as the default login shell.
 
-account_user="${USER:-$(id -un)}"
+account_user="$(id -un)"
 current_shell="$(getent passwd "$account_user" | cut -d: -f7)"
 
 if [[ "$current_shell" == */zsh ]]; then
@@ -20,11 +20,19 @@ zsh_path="$(command -v zsh)"
 
 # Ensure it's listed in /etc/shells
 if ! grep -qx "$zsh_path" /etc/shells; then
-  echo "$zsh_path" | sudo tee -a /etc/shells >/dev/null
+  if [[ "${DOTFILES_NONINTERACTIVE:-0}" == 1 ]]; then
+    echo "$zsh_path" | sudo -n tee -a /etc/shells >/dev/null
+  else
+    echo "$zsh_path" | sudo tee -a /etc/shells >/dev/null
+  fi
 fi
 
 echo "==> Changing default shell to $zsh_path"
-chsh -s "$zsh_path"
+if [[ "${DOTFILES_NONINTERACTIVE:-0}" == 1 ]]; then
+  sudo -n chsh -s "$zsh_path" "$account_user"
+else
+  chsh -s "$zsh_path"
+fi
 
 current_shell="$(getent passwd "$account_user" | cut -d: -f7)"
 if [[ "$current_shell" != "$zsh_path" ]]; then

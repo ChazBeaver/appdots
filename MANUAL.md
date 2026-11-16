@@ -5,6 +5,9 @@ every repo-defined shell function and alias. Examples assume the checkout
 is `~/Projects/home/appdots`, and `nvim` is your editor (substitute another
 installed editor if needed). Run only the block for your task and OS.
 
+For unattended installation, see [the installer contract](INSTALL.md).
+Use `./install.sh --check` before `./install.sh --non-interactive`.
+
 ## Install, update, and diagnose
 
 On a fresh Arch/Omarchy or macOS machine, clone the repository using its Git
@@ -34,8 +37,8 @@ source ~/.dotfiles-env.sh
 `sync.sh` updates links and the environment file; it does not install missing
 packages or apply system settings. It replaces conflicting real files and
 wrong links. Before introducing new managed paths, run `./backup.sh` and
-inspect its output. These root scripts take no arguments and have no dry-run
-or help mode; `./bootstrap.sh --help` would still run bootstrap.
+inspect its output. The legacy bootstrap, backup, sync, and doctor scripts
+take no arguments and have no dry-run or help mode; `./bootstrap.sh --help` would still run bootstrap.
 
 Run the aggregate doctor or any check individually:
 

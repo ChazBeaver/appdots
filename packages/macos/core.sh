@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+IFS=$'\n\t'
 # appdots/packages/macos/core.sh
 # Cross-platform apps installed via Homebrew.
 
@@ -33,6 +34,24 @@ BREW_CASKS=(
   libreoffice
   font-fira-code-nerd-font
 )
+
+failures=()
+
+case "${1:-}" in
+  --check) check_only=true ;;
+  '') check_only=false ;;
+  *) printf 'Usage: %s [--check]\n' "$0" >&2; exit 2 ;;
+esac
+[[ $# -le 1 ]] || exit 2
+if [[ "${DOTFILES_NONINTERACTIVE:-0}" == 1 || "$check_only" == true ]]; then
+  repo_dir="${APP_DOTS_DIR:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)}"
+  source "$repo_dir/lib/log.sh"
+  command -v brew >/dev/null || { log_err 'Install Homebrew before unattended installation.'; exit 4; }
+  # Cask installers can need privileges; test from the detached installer context.
+  sudo -n true </dev/null || { log_err 'Unattended Homebrew casks require non-interactive sudo authorization.'; exit 4; }
+  export NONINTERACTIVE=1 HOMEBREW_NO_AUTO_UPDATE=1
+fi
+[[ "$check_only" != true ]] || exit 0
 
 install_homebrew() {
   if command -v brew >/dev/null 2>&1; then
@@ -71,7 +90,10 @@ for pkg in "${BREW_FORMULAE[@]}"; do
     echo "  ✓ Already installed: $pkg"
   else
     echo "  + Installing: $pkg"
-    brew install "$pkg" || echo "  ✗ Failed: $pkg"
+    if ! brew install "$pkg"; then
+      echo "  ✗ Failed: $pkg"
+      failures+=("$pkg")
+    fi
   fi
 done
 
@@ -82,9 +104,16 @@ for pkg in "${BREW_CASKS[@]}"; do
     echo "  ✓ Already installed: $pkg"
   else
     echo "  + Installing (cask): $pkg"
-    brew install --cask "$pkg" || echo "  ✗ Failed: $pkg"
+    if ! brew install --cask "$pkg"; then
+      echo "  ✗ Failed: $pkg"
+      failures+=("$pkg")
+    fi
   fi
 done
 
 echo
+if (( ${#failures[@]} )); then
+  printf 'Package installation failed: %s\n' "${failures[*]}" >&2
+  exit 1
+fi
 echo "🎉 macOS packages done."
